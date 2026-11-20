@@ -74,6 +74,11 @@
       gap: 8px;
     }
 
+    .lock-app-btn {
+      padding: 8px 10px;
+      font-size: 0.72rem;
+    }
+
     .brand {
       display: flex;
       align-items: center;
@@ -1197,19 +1202,129 @@
     .photo-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: start;
       gap: 14px;
     }
 
     .photo-slot {
-      display: grid;
-      place-items: center;
-      aspect-ratio: 4 / 3;
+      width: 100%;
+      min-width: 0;
+      margin: 0;
+      overflow: hidden;
+      border: 3px solid #000000;
+      background: #ffffff;
+      color: #000000;
+      box-shadow: 4px 4px 0 #000000;
+    }
+
+    .photo-slot img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    body.bit-mode.theme-dark .photo-slot img {
+      filter: invert(1);
+    }
+
+    .photo-empty {
+      grid-column: 1 / -1;
+      margin: 0;
+      padding: 18px;
       border: 3px solid #000000;
       background: #ffffff;
       color: #000000;
       box-shadow: 4px 4px 0 #000000;
       font-family: "Silkscreen", monospace;
       font-size: 0.62rem;
+      text-align: center;
+    }
+
+    .drone-project-window {
+      width: min(980px, 100%);
+      margin: 24px auto;
+    }
+
+    .readme-content {
+      padding: 20px;
+      font-family: "Courier New", monospace;
+      line-height: 1.65;
+      overflow-wrap: anywhere;
+    }
+
+    .readme-content h1,
+    .readme-content h2,
+    .readme-content h3 {
+      margin: 1.1em 0 0.55em;
+      font-family: "Silkscreen", monospace;
+      line-height: 1.5;
+    }
+
+    .readme-content h1:first-child,
+    .readme-content h2:first-child,
+    .readme-content h3:first-child {
+      margin-top: 0;
+    }
+
+    .readme-content p,
+    .readme-content ul {
+      margin: 0 0 1em;
+    }
+
+    .readme-content ul {
+      padding-left: 1.6em;
+    }
+
+    .readme-content pre {
+      overflow: auto;
+      margin: 1em 0;
+      padding: 12px;
+      border: 2px solid #000000;
+      background: #ffffff;
+      color: #000000;
+      box-shadow: 4px 4px 0 #000000;
+      font-family: "Courier New", monospace;
+      white-space: pre;
+    }
+
+    .readme-content code {
+      font-family: "Courier New", monospace;
+    }
+
+    .readme-content a {
+      color: inherit;
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+    }
+
+    .readme-content a:hover,
+    .readme-content a:focus-visible {
+      background: #000000;
+      color: #ffffff;
+      outline: 2px solid #000000;
+      outline-offset: 2px;
+    }
+
+    .drone-project-actions {
+      display: flex;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 0 20px 88px;
+    }
+
+    .drone-project-actions a {
+      text-decoration: none;
+    }
+
+    #drone-back-btn {
+      position: fixed;
+      z-index: 40;
+      right: clamp(14px, 2vw, 24px);
+      bottom: clamp(14px, 2vh, 24px);
+      width: auto;
+      max-width: calc(100vw - 28px);
+      box-shadow: 4px 4px 0 #000000;
     }
 
     .slot-window {
@@ -1356,6 +1471,9 @@
       .quick-dock { position: static; display: grid; grid-template-columns: 1fr; }
       .quick-dock a { width: 100%; justify-content: center; }
       .hero-content h1 { overflow-wrap: anywhere; }
+      .readme-content { padding: 14px; }
+      .drone-project-actions { display: grid; grid-template-columns: 1fr; padding: 0 14px 88px; }
+      .drone-project-actions .btn { width: 100%; text-align: center; }
     }
 
     @media (min-width: 1000px) {
@@ -1477,15 +1595,15 @@
                 <span class="project-title">Theoretische Physik 4 – Minitests</span>
                 <span class="launcher-badge">AKTIV</span>
               </button>
-              <article class="project-tile project-tile-placeholder">
+              <button class="project-tile project-tile-active" type="button" data-open-drone-project>
                 <span class="project-icon" aria-hidden="true">
                   <svg viewBox="0 0 16 16" role="img" shape-rendering="crispEdges">
-                    <path fill="currentColor" d="M3 1h8l3 3v11H3zm2 2v2h5V3zm0 4v1h6V7zm0 3v1h6v-1z"/>
+                    <path fill="currentColor" d="M1 1h4v2H3v2H1zm10 0h4v4h-2V3h-2zM1 11h2v2h2v2H1zm12 0h2v4h-4v-2h2zM4 5h2v2H4zm6 0h2v2h-2zM5 6h6v2h2v2h-2v2H5v-2H3V8h2zm2 6h2v2H7z"/>
                   </svg>
                 </span>
-                <span class="project-title">FORMELSAMMLUNG</span>
-                <span class="project-meta">COMING SOON // 02</span>
-              </article>
+                <span class="project-title">PPO-Algorithmus zur Drohnensteuerung</span>
+                <span class="launcher-badge">AKTIV</span>
+              </button>
               <article class="project-tile project-tile-placeholder">
                 <span class="project-icon" aria-hidden="true">
                   <svg viewBox="0 0 16 16" role="img" shape-rendering="crispEdges">
@@ -1509,11 +1627,7 @@
 
           <section id="launcher-photography" class="launcher-panel" aria-label="Fotografie" hidden>
             <p class="panel-description">FOTOGRAFIE // AUSGEWÄHLTE PROJEKTE UND BILDER.</p>
-            <div class="photo-grid" aria-label="Fotografie-Platzhalter">
-              <div class="photo-slot">PHOTO_01</div>
-              <div class="photo-slot">PHOTO_02</div>
-              <div class="photo-slot">PHOTO_03</div>
-              <div class="photo-slot">PHOTO_04</div>
+            <div class="photo-grid" id="photo-grid" aria-label="Fotografie-Galerie">
             </div>
           </section>
 
@@ -1576,6 +1690,19 @@
     </main>
   </section>
 
+  <section id="drone-project-view" class="launcher-view" hidden>
+    <main class="launcher-shell">
+      <section class="launcher-window drone-project-window" aria-label="PPO-Drohnensteuerung">
+        <div class="window-titlebar">PROJECT.SYS // PPO-DROHNENSTEUERUNG</div>
+        <div id="drone-readme-content" class="readme-content">LADE README.MD …</div>
+        <div class="drone-project-actions">
+          <a class="btn" href="https://github.com/fwolf-ph/PPO-Algorithmus-zur-Drohnensteuerung" target="_blank" rel="noopener noreferrer">Auf GitHub ansehen</a>
+          <button id="drone-back-btn" class="btn secondary" type="button">Zurück zum Launcher</button>
+        </div>
+      </section>
+    </main>
+  </section>
+
   <!-- QUIZ APP VIEW -->
   <section id="quiz-app-view" hidden>
   <main class="app">
@@ -1589,6 +1716,7 @@
       </div>
       <div class="topbar-actions">
         <button id="launcher-back-btn" class="btn secondary" type="button">← Zurück zum Launcher</button>
+        <button id="lock-app-btn" class="btn secondary lock-app-btn" type="button">App sperren</button>
         <button id="abort-btn" class="btn secondary">Lernen abbrechen</button>
       </div>
     </header>
@@ -1683,13 +1811,15 @@
     const STORAGE_KEY = "theoLernappWrongQuestionIds";
     const CHECKPOINT_KEY = "theoLernappCheckpoint";
     const THEME_STORAGE_KEY = "theoLernappBitMode";
-    const TESTS_SESSION_KEY = "theoLernappDecryptedTests";
+    const TESTS_LOCAL_KEY = "theoLernappDecryptedTests";
     const menuView = document.getElementById("menu-view");
     const quizView = document.getElementById("quiz-view");
     const summaryView = document.getElementById("summary-view");
     const launcherView = document.getElementById("launcher-view");
     const quizAppView = document.getElementById("quiz-app-view");
     const unlockView = document.getElementById("unlock-view");
+    const droneProjectView = document.getElementById("drone-project-view");
+    const droneReadmeContent = document.getElementById("drone-readme-content");
     const unlockForm = document.getElementById("unlock-form");
     const unlockPassword = document.getElementById("quiz-password");
     const unlockError = document.getElementById("unlock-error");
@@ -1737,844 +1867,4 @@
 
     function loadCheckpoint() {
       try {
-        const checkpoint = JSON.parse(localStorage.getItem(CHECKPOINT_KEY));
-        if (!checkpoint || !Array.isArray(checkpoint.questionIds) ||
-            !Number.isInteger(checkpoint.currentIndex) ||
-            checkpoint.currentIndex < 0 || checkpoint.currentIndex >= checkpoint.questionIds.length) {
-          return null;
-        }
-        return checkpoint;
-      } catch (_) {
-        return null;
-      }
-    }
-
-    function saveCheckpoint() {
-      if (quizQuestions.length === 0) return;
-      savedCheckpoint = {
-        questionIds: quizQuestions.map(question => question.id),
-        optionOrderById: Object.fromEntries(quizQuestions.map(question => [
-          question.id,
-          question.displayedOptions.map(option => option.originalIndex)
-        ])),
-        currentIndex,
-        correctInRun,
-        incorrectInRun,
-        answersById,
-        repeatWrongOnly
-      };
-      localStorage.setItem(CHECKPOINT_KEY, JSON.stringify(savedCheckpoint));
-      updateResumeButton();
-    }
-
-    function clearCheckpoint() {
-      localStorage.removeItem(CHECKPOINT_KEY);
-      savedCheckpoint = null;
-      updateResumeButton();
-    }
-
-    function updateResumeButton() {
-      document.getElementById("resume-btn").hidden = !savedCheckpoint;
-    }
-
-    function setBitMode(darkMode) {
-      document.body.classList.add("bit-mode");
-      document.body.classList.toggle("theme-dark", darkMode);
-      const themeButton = document.getElementById("theme-btn");
-      themeButton.setAttribute("aria-pressed", String(darkMode));
-      themeButton.textContent = darkMode
-        ? "Light 1-Bit: Schwarz auf Weiß"
-        : "Dark 1-Bit: Weiß auf Schwarz";
-    }
-
-    function loadBitMode() {
-      try {
-        const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-        return savedTheme !== "light";
-      } catch (_) {
-        return true;
-      }
-    }
-
-    function bytesToBase64(bytes) {
-      let binary = "";
-      for (let offset = 0; offset < bytes.length; offset += 0x8000) {
-        binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
-      }
-      return btoa(binary);
-    }
-
-    function base64ToBytes(value) {
-      const binary = atob(value);
-      const bytes = new Uint8Array(binary.length);
-      for (let index = 0; index < binary.length; index++) {
-        bytes[index] = binary.charCodeAt(index);
-      }
-      return bytes;
-    }
-
-    function validateTests(value) {
-      if (!Array.isArray(value) || value.length === 0) {
-        throw new Error("Die Testdaten müssen ein nicht-leeres JSON-Array sein.");
-      }
-      const ids = new Set();
-      value.forEach((test, testIndex) => {
-        if (!test || typeof test.name !== "string" || !Array.isArray(test.questions) ||
-            test.questions.length === 0) {
-          throw new Error(`Test ${testIndex + 1} benötigt einen Namen und mindestens eine Frage.`);
-        }
-        test.questions.forEach((question, questionIndex) => {
-          if (!question || typeof question.id !== "string" || !question.id ||
-              typeof question.text !== "string" || !Array.isArray(question.options) ||
-              question.options.length !== 4 || !Number.isInteger(question.correctIndex) ||
-              question.correctIndex < 0 || question.correctIndex > 3 ||
-              typeof question.explanation !== "string") {
-            throw new Error(`Frage ${questionIndex + 1} in „${test.name}“ ist unvollständig.`);
-          }
-          if (ids.has(question.id)) {
-            throw new Error(`Die Frage-ID „${question.id}“ ist doppelt vergeben.`);
-          }
-          ids.add(question.id);
-          if (typeof question.testName !== "string" || !question.testName) {
-            question.testName = test.name;
-          }
-        });
-      });
-      return value;
-    }
-
-    async function gzipBytes(bytes) {
-      if (typeof CompressionStream !== "function") {
-        throw new Error("Dieser Browser unterstützt die benötigte Datenkomprimierung nicht.");
-      }
-      return new Uint8Array(await new Response(
-        new Blob([bytes]).stream().pipeThrough(new CompressionStream("gzip"))
-      ).arrayBuffer());
-    }
-
-    async function gunzipBytes(bytes) {
-      if (typeof DecompressionStream !== "function") {
-        throw new Error("Dieser Browser unterstützt die benötigte Datenkomprimierung nicht.");
-      }
-      return new Uint8Array(await new Response(
-        new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"))
-      ).arrayBuffer());
-    }
-
-    async function deriveTestsKey(password, salt, iterations, usages) {
-      const passwordKey = await crypto.subtle.importKey(
-        "raw",
-        new TextEncoder().encode(password),
-        "PBKDF2",
-        false,
-        ["deriveKey"]
-      );
-      return crypto.subtle.deriveKey(
-        { name: "PBKDF2", salt, iterations, hash: "SHA-256" },
-        passwordKey,
-        { name: "AES-GCM", length: 256 },
-        false,
-        usages
-      );
-    }
-
-    async function decryptPayload(encryptedPayload, password) {
-      if (!crypto?.subtle) {
-        throw new Error("Web Crypto ist nicht verfügbar. Öffne die Seite über HTTPS oder localhost.");
-      }
-      const envelope = JSON.parse(new TextDecoder().decode(base64ToBytes(encryptedPayload)));
-      if (envelope.v !== 1 || envelope.z !== "gzip" ||
-          !Number.isInteger(envelope.i) || envelope.i < 100000 || envelope.i > 1000000) {
-        throw new Error("Der verschlüsselte Testdatensatz hat ein ungültiges Format.");
-      }
-      const salt = base64ToBytes(envelope.s);
-      const iv = base64ToBytes(envelope.n);
-      const ciphertext = base64ToBytes(envelope.c);
-      if (salt.length !== 16 || iv.length !== 12 || ciphertext.length < 16) {
-        throw new Error("Der verschlüsselte Testdatensatz ist unvollständig.");
-      }
-      const key = await deriveTestsKey(password, salt, envelope.i, ["decrypt"]);
-      const compressed = new Uint8Array(await crypto.subtle.decrypt(
-        { name: "AES-GCM", iv },
-        key,
-        ciphertext
-      ));
-      const plaintext = await gunzipBytes(compressed);
-      return validateTests(JSON.parse(new TextDecoder().decode(plaintext)));
-    }
-
-    function decryptTests(password) {
-      return decryptPayload(ENCRYPTED_TESTS, password);
-    }
-
-    async function encryptTestsForAdmin(tests, password) {
-      if (!crypto?.subtle) {
-        throw new Error("Web Crypto ist nicht verfügbar. Öffne die Seite über HTTPS oder localhost.");
-      }
-      const data = new TextEncoder().encode(JSON.stringify(validateTests(tests)));
-      const compressed = await gzipBytes(data);
-      const salt = crypto.getRandomValues(new Uint8Array(16));
-      const iv = crypto.getRandomValues(new Uint8Array(12));
-      const iterations = 310000;
-      const key = await deriveTestsKey(password, salt, iterations, ["encrypt"]);
-      const ciphertext = new Uint8Array(await crypto.subtle.encrypt(
-        { name: "AES-GCM", iv },
-        key,
-        compressed
-      ));
-      const envelope = {
-        v: 1,
-        i: iterations,
-        z: "gzip",
-        s: bytesToBase64(salt),
-        n: bytesToBase64(iv),
-        c: bytesToBase64(ciphertext)
-      };
-      return bytesToBase64(new TextEncoder().encode(JSON.stringify(envelope)));
-    }
-
-    function restoreTestsFromSession() {
-      try {
-        const stored = sessionStorage.getItem(TESTS_SESSION_KEY);
-        if (!stored) return false;
-        TESTS = validateTests(JSON.parse(stored));
-        return true;
-      } catch (_) {
-        try {
-          sessionStorage.removeItem(TESTS_SESSION_KEY);
-        } catch (_) {
-          // Ignore an unavailable session store and request the password instead.
-        }
-        return false;
-      }
-    }
-
-    function initializeQuizData() {
-      populateTestSelect();
-      renderStats();
-      updateStartAvailability();
-      updateResumeButton();
-    }
-
-    function openQuizApp() {
-      launcherView.hidden = true;
-      adminPanel.hidden = true;
-      if (TESTS.length > 0) {
-        unlockView.hidden = true;
-        quizAppView.hidden = false;
-      } else {
-        quizAppView.hidden = true;
-        unlockError.hidden = true;
-        unlockView.hidden = false;
-        unlockPassword.value = "";
-        window.setTimeout(() => unlockPassword.focus(), 0);
-      }
-      window.scrollTo(0, 0);
-    }
-
-    function returnToLauncher() {
-      if (TESTS.length > 0 && quizView.classList.contains("active")) {
-        saveWrongIds();
-        saveCheckpoint();
-      }
-      quizAppView.hidden = true;
-      unlockView.hidden = true;
-      launcherView.hidden = false;
-      adminPanel.hidden = !adminMode;
-      window.scrollTo(0, 0);
-    }
-
-    async function submitUnlock(event) {
-      event.preventDefault();
-      unlockButton.disabled = true;
-      unlockButton.textContent = "Entschlüsseln …";
-      unlockError.hidden = true;
-      unlockError.textContent = "";
-      try {
-        const tests = await decryptTests(unlockPassword.value);
-        const serialized = JSON.stringify(tests);
-        try {
-          sessionStorage.setItem(TESTS_SESSION_KEY, serialized);
-        } catch (_) {
-          throw new Error("Der entschlüsselte Datensatz kann nicht in dieser Sitzung gespeichert werden.");
-        }
-        TESTS = tests;
-        initializeQuizData();
-        if (adminMode) adminJson.value = JSON.stringify(TESTS, null, 2);
-        unlockPassword.value = "";
-        unlockView.hidden = true;
-        quizAppView.hidden = false;
-        showView(menuView);
-        window.scrollTo(0, 0);
-      } catch (error) {
-        unlockError.textContent = error.message.includes("Web Crypto") ||
-          error.message.includes("Sitzung gespeichert")
-          ? error.message
-          : "Falsches Passwort oder verschlüsselter Datensatz beschädigt.";
-        unlockError.hidden = false;
-        unlockPassword.focus();
-      } finally {
-        unlockButton.disabled = false;
-        unlockButton.textContent = "Entsperren";
-      }
-    }
-
-    async function encryptAdminJson() {
-      adminEncryptButton.disabled = true;
-      adminCopyButton.disabled = true;
-      adminOutput.value = "";
-      adminStatus.textContent = "";
-      try {
-        const tests = validateTests(JSON.parse(adminJson.value));
-        if (adminPassword.value.length < 12) {
-          throw new Error("Das Passwort muss mindestens 12 Zeichen lang sein.");
-        }
-        adminOutput.value = await encryptTestsForAdmin(tests, adminPassword.value);
-        adminCopyButton.disabled = false;
-        const questionCount = tests.reduce((total, test) => total + test.questions.length, 0);
-        adminStatus.textContent =
-          `${tests.length} Tests / ${questionCount} Fragen verschlüsselt. String in ENCRYPTED_TESTS einfügen.`;
-      } catch (error) {
-        adminStatus.textContent = error instanceof SyntaxError
-          ? "Das JSON ist ungültig."
-          : error.message || "Die Testdaten konnten nicht verschlüsselt werden.";
-      } finally {
-        adminPassword.value = "";
-        adminEncryptButton.disabled = false;
-      }
-    }
-
-    function updateSystemClock() {
-      const now = new Date();
-      document.getElementById("system-time").textContent =
-        new Intl.DateTimeFormat("de-DE", {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit"
-        }).format(now);
-      document.getElementById("system-date").textContent =
-        new Intl.DateTimeFormat("de-DE", {
-          weekday: "short",
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric"
-        }).format(now);
-    }
-
-    function detectBrowserName() {
-      const userAgent = navigator.userAgent;
-      if (/EdgA?\/|EdgiOS\//i.test(userAgent)) return "Microsoft Edge";
-      if (/OPR\/|Opera/i.test(userAgent)) return "Opera";
-      if (/Firefox\/|FxiOS\//i.test(userAgent)) return "Mozilla Firefox";
-      if (/CriOS\//i.test(userAgent)) return "Google Chrome";
-      if (/Chromium\//i.test(userAgent)) return "Chromium";
-      if (/Chrome\//i.test(userAgent)) return "Google Chrome";
-      if (/MSIE|Trident\//i.test(userAgent)) return "Internet Explorer";
-      if (/Safari\//i.test(userAgent)) return "Safari";
-      if (/AppleWebKit\//i.test(userAgent)) return "WebKit-Browser";
-      return "Unbekannter Browser";
-    }
-
-    function allQuestions() {
-      return TESTS.flatMap(test => test.questions);
-    }
-
-    function shuffle(array) {
-      const copy = [...array];
-      for (let i = copy.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [copy[i], copy[j]] = [copy[j], copy[i]];
-      }
-      return copy;
-    }
-
-    function chooseBalancedQuestions(questions, count) {
-      const groups = TESTS.map(test =>
-        questions.filter(question => question.testName === test.name)
-      );
-      const chosen = [];
-
-      while (chosen.length < count) {
-        let addedQuestion = false;
-        for (const group of groups) {
-          if (group.length > 0) {
-            chosen.push(group.shift());
-            addedQuestion = true;
-            if (chosen.length === count) break;
-          }
-        }
-        if (!addedQuestion) break;
-      }
-
-      return chosen;
-    }
-
-    function populateTestSelect() {
-      testSelect.innerHTML = "";
-      TESTS.forEach((test, index) => {
-        const option = document.createElement("option");
-        option.value = String(index);
-        option.textContent = test.name;
-        testSelect.appendChild(option);
-      });
-      const mixed = document.createElement("option");
-      mixed.value = "all";
-      mixed.textContent = "Alle Tests gemischt";
-      testSelect.appendChild(mixed);
-    }
-
-    function getSelectedQuestions() {
-      if (testSelect.value === "all") return allQuestions();
-      return TESTS[Number(testSelect.value)].questions;
-    }
-
-    function getSelectedFilter() {
-      return document.querySelector('input[name="filter"]:checked').value;
-    }
-
-    function renderStats() {
-      const selectedTest = testSelect.value === "all"
-        ? null
-        : TESTS[Number(testSelect.value)];
-      const questions = selectedTest ? selectedTest.questions : allQuestions();
-      const name = selectedTest ? selectedTest.name : "Alle Tests gemischt";
-      const wrongCount = questions.filter(question => wrongIds.has(question.id)).length;
-      statsContainer.innerHTML = `
-        <div class="stat">
-          <div class="stat-name">${escapeHtml(name)}</div>
-          <div class="stat-value">${questions.length} Fragen · <span class="wrong-count">${wrongCount} falsch / zu üben</span></div>
-          ${selectedTest
-            ? `<button type="button" class="stat-reset" data-reset-test="${escapeHtml(selectedTest.name)}">Fortschritt dieses Tests zurücksetzen</button>`
-            : ""}
-        </div>
-      `;
-    }
-
-    function updateStartAvailability() {
-      const selected = getSelectedQuestions();
-      const isWrongFilter = getSelectedFilter() === "wrong";
-      const available = isWrongFilter
-        ? selected.filter(q => wrongIds.has(q.id))
-        : selected;
-
-      const maxCount = Math.max(1, available.length);
-      mixedCountInput.max = String(maxCount);
-      if (available.length > 0 && Number(mixedCountInput.value) > maxCount) {
-        mixedCountInput.value = String(maxCount);
-      }
-      mixedCountInput.disabled = available.length === 0;
-      mixedCountValue.textContent = mixedCountInput.value;
-      mixedCountLabel.textContent = testSelect.value === "all"
-        ? "Fragen aus allen Tests"
-        : "Fragen aus diesem Test";
-      mixedCountHint.textContent = `Aus ${available.length} passenden Fragen auswählen.`;
-
-      if (isWrongFilter && available.length === 0) {
-        filterNotice.textContent = "Für diese Auswahl sind aktuell keine falschen Fragen vorhanden.";
-        startBtn.disabled = true;
-      } else if (available.length === 0) {
-        filterNotice.textContent = "Für diese Auswahl sind keine Fragen vorhanden.";
-        startBtn.disabled = true;
-      } else {
-        filterNotice.textContent = "";
-        startBtn.disabled = false;
-      }
-    }
-
-    function showView(view) {
-      [menuView, quizView, summaryView].forEach(item => item.classList.remove("active"));
-      view.classList.add("active");
-      document.getElementById("abort-btn").classList.toggle("visible", view === quizView);
-    }
-
-    function typesetMath(container) {
-      if (window.MathJax && typeof window.MathJax.typesetPromise === "function") {
-        window.MathJax.typesetClear(container ? [container] : undefined);
-        window.MathJax.typesetPromise(container ? [container] : undefined).catch(() => {});
-      }
-    }
-
-    function startQuiz(forceWrongOnly = false) {
-      repeatWrongOnly = forceWrongOnly;
-      let selected = getSelectedQuestions();
-
-      if (forceWrongOnly) {
-        selected = selected.filter(q => wrongIds.has(q.id));
-      } else if (getSelectedFilter() === "wrong") {
-        selected = selected.filter(q => wrongIds.has(q.id));
-      }
-
-      const requestedCount = Math.min(Number(mixedCountInput.value), selected.length);
-      if (testSelect.value === "all") {
-        selected = shuffleInput.checked
-          ? shuffle(selected).slice(0, requestedCount)
-          : chooseBalancedQuestions(selected, requestedCount);
-      } else {
-        if (shuffleInput.checked || forceWrongOnly) {
-          selected = shuffle(selected);
-        }
-        selected = selected.slice(0, requestedCount);
-      }
-
-      quizQuestions = selected;
-      if (quizQuestions.length === 0) return;
-
-      quizQuestions = quizQuestions.map(question => {
-        const mappedOptions = question.options.map((text, originalIndex) => ({
-          text,
-          originalIndex
-        }));
-        return {
-          ...question,
-          displayedOptions: shuffleInput.checked ? shuffle(mappedOptions) : mappedOptions
-        };
-      });
-
-      currentIndex = 0;
-      correctInRun = 0;
-      incorrectInRun = 0;
-      answersById = {};
-      showView(quizView);
-      saveCheckpoint();
-      renderQuestion();
-    }
-
-    function resumeQuiz() {
-      const checkpoint = savedCheckpoint;
-      if (!checkpoint) return;
-
-      const questionsById = new Map(allQuestions().map(question => [question.id, question]));
-      const restored = checkpoint.questionIds.map(id => questionsById.get(id));
-      if (restored.some(question => !question)) {
-        clearCheckpoint();
-        return;
-      }
-
-      quizQuestions = restored.map(question => {
-        const optionOrder = checkpoint.optionOrderById?.[question.id];
-        const isValidOrder = Array.isArray(optionOrder) &&
-          optionOrder.length === question.options.length &&
-          new Set(optionOrder).size === question.options.length &&
-          optionOrder.every(index =>
-            Number.isInteger(index) && index >= 0 && index < question.options.length
-          );
-        const mappedOptions = isValidOrder
-          ? optionOrder.map(originalIndex => ({
-              text: question.options[originalIndex],
-              originalIndex
-            }))
-          : question.options.map((text, originalIndex) => ({ text, originalIndex }));
-        return {
-          ...question,
-          displayedOptions: isValidOrder
-            ? mappedOptions
-            : shuffleInput.checked ? shuffle(mappedOptions) : mappedOptions
-        };
-      });
-      currentIndex = checkpoint.currentIndex;
-      correctInRun = Number(checkpoint.correctInRun) || 0;
-      incorrectInRun = Number(checkpoint.incorrectInRun) || 0;
-      answersById = checkpoint.answersById && typeof checkpoint.answersById === "object"
-        ? checkpoint.answersById
-        : {};
-      repeatWrongOnly = Boolean(checkpoint.repeatWrongOnly);
-      showView(quizView);
-      renderQuestion();
-    }
-
-    function renderQuestion() {
-      const question = quizQuestions[currentIndex];
-      const progress = currentIndex + 1;
-
-      document.getElementById("progress-label").textContent =
-        document.body.classList.contains("bit-mode")
-          ? `QUEST ${progress} / ${quizQuestions.length}`
-          : `Frage ${progress} von ${quizQuestions.length}`;
-      document.getElementById("progress-bar").style.width =
-        `${(progress / quizQuestions.length) * 100}%`;
-
-      const repeatBadge = document.getElementById("repeat-badge");
-      repeatBadge.hidden = !wrongIds.has(question.id);
-
-      document.getElementById("question-text").textContent = question.text;
-      const answersContainer = document.getElementById("answers");
-      answersContainer.innerHTML = "";
-
-      question.displayedOptions.forEach(option => {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "answer";
-        button.textContent = option.text;
-        button.dataset.originalIndex = String(option.originalIndex);
-        button.addEventListener("click", () => answerQuestion(button, question));
-        answersContainer.appendChild(button);
-      });
-
-      const explanation = document.getElementById("explanation");
-      explanation.classList.remove("visible");
-      explanation.textContent = "";
-
-      const nextBtn = document.getElementById("next-btn");
-      nextBtn.disabled = true;
-      nextBtn.textContent = progress === quizQuestions.length ? "Auswertung anzeigen" : "Nächste Frage";
-
-      const savedAnswer = answersById[question.id];
-      if (Number.isInteger(savedAnswer)) {
-        renderAnswerFeedback(question, savedAnswer);
-        nextBtn.disabled = false;
-      }
-      typesetMath(document.getElementById("quiz-view"));
-    }
-
-    function answerQuestion(selectedButton, question) {
-      const isCorrect =
-        Number(selectedButton.dataset.originalIndex) === question.correctIndex;
-
-      if (isCorrect) {
-        correctInRun++;
-        wrongIds.delete(question.id);
-      } else {
-        incorrectInRun++;
-        wrongIds.add(question.id);
-      }
-      answersById[question.id] = Number(selectedButton.dataset.originalIndex);
-      saveWrongIds();
-      saveCheckpoint();
-
-      renderAnswerFeedback(question, answersById[question.id]);
-      document.getElementById("next-btn").disabled = false;
-    }
-
-    function renderAnswerFeedback(question, selectedIndex) {
-      const answerButtons = [...document.querySelectorAll(".answer")];
-      answerButtons.forEach(button => {
-        button.disabled = true;
-        const originalIndex = Number(button.dataset.originalIndex);
-        if (originalIndex === question.correctIndex) {
-          button.classList.add("correct");
-        }
-        if (originalIndex === selectedIndex && selectedIndex !== question.correctIndex) {
-          button.classList.add("incorrect");
-        }
-      });
-      const isCorrect = selectedIndex === question.correctIndex;
-      const explanation = document.getElementById("explanation");
-      explanation.textContent = `${isCorrect ? "Richtig." : "Leider falsch."} ${question.explanation}`;
-      explanation.classList.add("visible");
-      typesetMath(explanation);
-    }
-
-    function nextQuestion() {
-      if (currentIndex < quizQuestions.length - 1) {
-        currentIndex++;
-        saveCheckpoint();
-        renderQuestion();
-      } else {
-        showSummary();
-      }
-    }
-
-    function showSummary() {
-      clearCheckpoint();
-      showView(summaryView);
-      document.getElementById("correct-count").textContent = String(correctInRun);
-      document.getElementById("incorrect-count").textContent = String(incorrectInRun);
-
-      const total = quizQuestions.length;
-      document.getElementById("summary-text").textContent =
-        `${correctInRun} von ${total} Fragen wurden richtig beantwortet.`;
-
-      const score = total === 0 ? 0 : correctInRun / total;
-      const earnedStars = score >= 0.9 ? 3 : score >= 0.75 ? 2 : score >= 0.5 ? 1 : 0;
-      const stars = document.getElementById("rpg-stars");
-      stars.replaceChildren();
-      for (let index = 0; index < 3; index++) {
-        const star = document.createElement("span");
-        star.className = `rpg-star${index < earnedStars ? " earned" : ""}`;
-        star.textContent = index < earnedStars ? "★" : "☆";
-        star.setAttribute("aria-hidden", "true");
-        stars.appendChild(star);
-      }
-      stars.setAttribute("aria-label", `${earnedStars} von 3 Sternen`);
-      document.getElementById("rpg-rating-message").textContent =
-        earnedStars === 3 ? `Quest gemeistert! ${Math.round(score * 100)} %`
-          : earnedStars === 2 ? `Fast perfekt! ${Math.round(score * 100)} %`
-          : earnedStars === 1 ? `Guter Start! ${Math.round(score * 100)} %`
-          : `Weiter üben – der nächste Stern wartet! ${Math.round(score * 100)} %`;
-
-      const repeatBtn = document.getElementById("repeat-wrong-btn");
-      const hasWrongNow = allQuestions().some(question => wrongIds.has(question.id));
-      const wrongInSelection = getSelectedQuestions().some(question => wrongIds.has(question.id));
-      repeatBtn.hidden = repeatWrongOnly || !hasWrongNow || (testSelect.value !== "all" && !wrongInSelection);
-
-      renderStats();
-      typesetMath(summaryView);
-    }
-
-    function goToMenu() {
-      showView(menuView);
-      renderStats();
-      updateStartAvailability();
-    }
-
-    function escapeHtml(value) {
-      return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;");
-    }
-
-    const launcherPanelByTab = {
-      projects: document.getElementById("launcher-projects"),
-      photography: document.getElementById("launcher-photography"),
-      slot03: document.getElementById("launcher-slot03")
-    };
-    const launcherTitleByTab = {
-      projects: "APP-DRAWER // PROJEKTE",
-      photography: "APP-DRAWER // FOTOGRAFIE",
-      slot03: "APP-DRAWER // SLOT_03"
-    };
-
-    function selectLauncherTab(tabName) {
-      if (!launcherPanelByTab[tabName]) return;
-      document.querySelectorAll("[data-launcher-tab]").forEach(button => {
-        const selected = button.dataset.launcherTab === tabName;
-        button.classList.toggle("active", selected);
-        button.setAttribute("aria-pressed", String(selected));
-      });
-      Object.entries(launcherPanelByTab).forEach(([name, panel]) => {
-        panel.hidden = name !== tabName;
-      });
-      document.getElementById("launcher-window-title").textContent = launcherTitleByTab[tabName];
-    }
-
-    document.querySelectorAll("[data-launcher-tab]").forEach(button =>
-      button.addEventListener("click", () => selectLauncherTab(button.dataset.launcherTab))
-    );
-
-    testSelect.addEventListener("change", () => {
-      renderStats();
-      updateStartAvailability();
-    });
-    document.querySelectorAll('input[name="filter"]').forEach(input =>
-      input.addEventListener("change", updateStartAvailability)
-    );
-    mixedCountInput.addEventListener("input", () => {
-      mixedCountValue.textContent = mixedCountInput.value;
-    });
-    document.addEventListener("keydown", event => {
-      if (quizAppView.hidden || !quizView.classList.contains("active")) return;
-      const target = event.target;
-      if (target instanceof HTMLElement &&
-          (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))) {
-        return;
-      }
-
-      const key = event.key.toLowerCase();
-      const answerIndex = /^[1-4]$/.test(key) ? Number(key) - 1 : "abcd".indexOf(key);
-      if (answerIndex >= 0) {
-        const answerButton = document.querySelectorAll(".answer")[answerIndex];
-        if (answerButton && !answerButton.disabled) {
-          event.preventDefault();
-          answerButton.click();
-        }
-        return;
-      }
-
-      if ((event.key === "Enter" || event.key === " ") &&
-          !document.getElementById("next-btn").disabled) {
-        event.preventDefault();
-        document.getElementById("next-btn").click();
-      }
-    });
-    startBtn.addEventListener("click", () => startQuiz(false));
-    document.getElementById("next-btn").addEventListener("click", nextQuestion);
-    document.getElementById("summary-menu-btn").addEventListener("click", goToMenu);
-    document.getElementById("repeat-wrong-btn").addEventListener("click", () => {
-      startQuiz(true);
-    });
-    document.querySelectorAll("[data-theme-toggle]").forEach(button =>
-      button.addEventListener("click", () => {
-        const darkMode = !document.body.classList.contains("theme-dark");
-        setBitMode(darkMode);
-        try {
-          localStorage.setItem(THEME_STORAGE_KEY, darkMode ? "dark" : "light");
-        } catch (_) {
-          // The current page still switches themes when browser storage is unavailable.
-        }
-      })
-    );
-    document.querySelectorAll("[data-open-quiz]").forEach(button =>
-      button.addEventListener("click", openQuizApp)
-    );
-    document.getElementById("launcher-back-btn").addEventListener("click", returnToLauncher);
-    unlockForm.addEventListener("submit", submitUnlock);
-    document.getElementById("unlock-back-btn").addEventListener("click", () => {
-      unlockView.hidden = true;
-      launcherView.hidden = false;
-      adminPanel.hidden = !adminMode;
-      unlockPassword.value = "";
-      unlockError.hidden = true;
-      window.scrollTo(0, 0);
-    });
-    adminEncryptButton.addEventListener("click", encryptAdminJson);
-    adminCopyButton.addEventListener("click", async () => {
-      try {
-        await navigator.clipboard.writeText(adminOutput.value);
-        adminStatus.textContent = "Verschlüsselter String in die Zwischenablage kopiert.";
-      } catch (_) {
-        adminOutput.focus();
-        adminOutput.select();
-        adminStatus.textContent = "Automatisches Kopieren nicht möglich. String bitte manuell kopieren.";
-      }
-    });
-    document.getElementById("abort-btn").addEventListener("click", () => {
-      if (confirm("Lernen abbrechen? Deine Antworten und die aktuelle Position werden gespeichert, damit du später fortsetzen kannst.")) {
-        saveWrongIds();
-        saveCheckpoint();
-        goToMenu();
-      }
-    });
-    document.getElementById("resume-btn").addEventListener("click", resumeQuiz);
-    statsContainer.addEventListener("click", event => {
-      const button = event.target.closest("[data-reset-test]");
-      if (!button) return;
-      const test = TESTS.find(item => item.name === button.dataset.resetTest);
-      if (!test) return;
-      if (confirm(`Den Lernfortschritt für „${test.name}“ zurücksetzen?`)) {
-        test.questions.forEach(question => wrongIds.delete(question.id));
-        saveWrongIds();
-        if (savedCheckpoint?.questionIds.some(id => test.questions.some(question => question.id === id))) {
-          clearCheckpoint();
-        }
-        renderStats();
-        updateStartAvailability();
-      }
-    });
-
-    document.getElementById("reset-btn").addEventListener("click", () => {
-      if (confirm("Möchtest du wirklich den gesamten Lernfortschritt löschen?")) {
-        wrongIds.clear();
-        saveWrongIds();
-        clearCheckpoint();
-        renderStats();
-        updateStartAvailability();
-      }
-    });
-
-    adminPanel.hidden = !adminMode;
-    const restoredTests = restoreTestsFromSession();
-    if (restoredTests) {
-      initializeQuizData();
-      if (adminMode) adminJson.value = JSON.stringify(TESTS, null, 2);
-    } else {
-      startBtn.disabled = true;
-      updateResumeButton();
-    }
-    setBitMode(loadBitMode());
-    updateSystemClock();
-    document.getElementById("browser-name").textContent = detectBrowserName();
-    window.setInterval(updateSystemClock, 1000);
-  </script>
-</body>
-</html>
+        const checkpoint = JSON.parse(loc
