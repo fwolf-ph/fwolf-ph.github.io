@@ -1351,6 +1351,65 @@
       font-family: "Courier New", monospace;
     }
 
+    .construction-scene {
+      display: grid;
+      justify-items: center;
+      gap: 14px;
+      padding: 22px 18px;
+      text-align: center;
+    }
+
+    .construction-stripe {
+      width: 100%;
+      height: 16px;
+      border: 2px solid #000000;
+      background: repeating-linear-gradient(
+        -45deg,
+        #000000 0 10px,
+        #ffffff 10px 20px
+      );
+    }
+
+    .construction-art {
+      display: grid;
+      place-items: center;
+      padding: 12px 18px;
+      border: 3px solid #000000;
+      background: #ffffff;
+      box-shadow: 4px 4px 0 #000000;
+    }
+
+    .construction-art svg {
+      width: 132px;
+      height: 88px;
+      image-rendering: pixelated;
+    }
+
+    .construction-title {
+      margin: 0;
+      font-family: "Silkscreen", monospace;
+      font-size: clamp(0.78rem, 2.2vw, 1.05rem);
+      letter-spacing: 0.04em;
+    }
+
+    .construction-copy {
+      max-width: 44ch;
+      margin: 0;
+      font-family: "Courier New", monospace;
+      font-size: 0.92rem;
+      line-height: 1.6;
+    }
+
+    .construction-status {
+      margin: 0;
+      padding: 5px 10px;
+      border: 2px solid #000000;
+      background: #000000;
+      color: #ffffff;
+      font-family: "Silkscreen", monospace;
+      font-size: 0.6rem;
+    }
+
     .password-panel,
     .admin-panel {
       width: min(760px, 100%);
@@ -1579,6 +1638,13 @@
             </svg>
             <span>PLATZHALTER</span>
           </button>
+          <button id="launcher-tab-imprint" class="sidebar-item" type="button" data-launcher-tab="imprint"
+            aria-controls="launcher-imprint" aria-pressed="false">
+            <svg viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges">
+              <path fill="currentColor" d="M3 2h10v2H3zm0 4h10v2H3zm0 4h6v2H3zm10 0h2v4h-2z"/>
+            </svg>
+            <span>IMPRESSUM</span>
+          </button>
         </nav>
 
         <section class="launcher-window launcher-content-window" aria-label="Launcher-Inhalt">
@@ -1607,20 +1673,11 @@
               <article class="project-tile project-tile-placeholder">
                 <span class="project-icon" aria-hidden="true">
                   <svg viewBox="0 0 16 16" role="img" shape-rendering="crispEdges">
-                    <path fill="currentColor" d="M7 1h2v2H7zM3 4h2v2H3zm8 0h2v2h-2zM1 7h2v2H1zm12 0h2v2h-2zM4 7h2v2H4zm4 0h2v2H8zm4 0h2v2h-2zM3 10h2v2H3zm8 0h2v2h-2zM7 13h2v2H7z"/>
-                  </svg>
-                </span>
-                <span class="project-title">QUANTENMECHANIK</span>
-                <span class="project-meta">COMING SOON // 03</span>
-              </article>
-              <article class="project-tile project-tile-placeholder">
-                <span class="project-icon" aria-hidden="true">
-                  <svg viewBox="0 0 16 16" role="img" shape-rendering="crispEdges">
                     <path fill="currentColor" d="M2 2h5v5H2zm7 0h5v5H9zM2 9h5v5H2zm7 0h5v5H9z"/>
                   </svg>
                 </span>
                 <span class="project-title">NEUES PROJEKT</span>
-                <span class="project-meta">COMING SOON // 04</span>
+                <span class="project-meta">COMING SOON // 03</span>
               </article>
             </div>
           </section>
@@ -1637,6 +1694,28 @@
               <div class="slot-content">
                 <p>WORK IN PROGRESS // SLOT_03</p>
                 <span>NO CONTENT LOADED</span>
+              </div>
+            </div>
+          </section>
+
+          <section id="launcher-imprint" class="launcher-panel" aria-label="Impressum" hidden>
+            <div class="launcher-window slot-window">
+              <div class="window-titlebar">LEGAL.SYS // IMPRESSUM</div>
+              <div class="construction-scene">
+                <div class="construction-stripe" aria-hidden="true"></div>
+                <div class="construction-art" aria-hidden="true">
+                  <svg viewBox="0 0 24 16" role="img" shape-rendering="crispEdges">
+                    <!-- Pixel-Art 1-Bit Absperrbake & Pylonen -->
+                    <path fill="currentColor" d="M2 2h20v5H2z"/>
+                    <path fill="#ffffff" d="M4 3h2v3H4zm5 0h2v3H9zm5 0h2v3h-2zm5 0h1v3h-1z"/>
+                    <path fill="currentColor" d="M4 7h2v7H4zm14 0h2v7h-2zM2 14h6v1H2zm14 0h6v1h-6z"/>
+                    <path fill="currentColor" d="M11 9h2v2h-2zm-1 2h4v2h-4zm-1 2h6v2H9z"/>
+                  </svg>
+                </div>
+                <p class="construction-title">BAUSTELLE // UNDER CONSTRUCTION</p>
+                <p class="construction-copy">Hier wird aktuell noch gebaut. Das vollständige Impressum folgt in Kürze.</p>
+                <span class="construction-status">STATUS: 1-BIT WORKZONE</span>
+                <div class="construction-stripe" aria-hidden="true"></div>
               </div>
             </div>
           </section>
@@ -2471,10 +2550,7 @@
 
       document.getElementById("progress-label").textContent =
         document.body.classList.contains("bit-mode")
-          ? `QUEST ${progress} / ${quizQuestions.length}`
-          : `Frage ${progress} von ${quizQuestions.length}`;
-      document.getElementById("progress-bar").style.width =
-        `${(progress / quizQuestions.length) * 100}%`;
+          ? `QUEST ${progress} / ${quizQuestions.length}` : `Frage ${progress} von ${quizQuestions.length}`; document.getElementById("progress-bar").style.width = `${(progress / quizQuestions.length) * 100}%`;
 
       const repeatBadge = document.getElementById("repeat-badge");
       repeatBadge.hidden = !wrongIds.has(question.id);
@@ -2565,7 +2641,7 @@
 
       const total = quizQuestions.length;
       document.getElementById("summary-text").textContent =
-        `${correctInRun} von ${total} Fragen wurden richtig beantwortet.`;
+        `${correctInRun} von${total} Fragen wurden richtig beantwortet.`;
 
       const score = total === 0 ? 0 : correctInRun / total;
       const earnedStars = score >= 0.9 ? 3 : score >= 0.75 ? 2 : score >= 0.5 ? 1 : 0;
@@ -2573,12 +2649,7 @@
       stars.replaceChildren();
       for (let index = 0; index < 3; index++) {
         const star = document.createElement("span");
-        star.className = `rpg-star${index < earnedStars ? " earned" : ""}`;
-        star.textContent = index < earnedStars ? "★" : "☆";
-        star.setAttribute("aria-hidden", "true");
-        stars.appendChild(star);
-      }
-      stars.setAttribute("aria-label", `${earnedStars} von 3 Sternen`);
+        star.className = `rpg-star${index < earnedStars ? " earned" : ""}`; star.textContent = index < earnedStars ? "★" : "☆"; star.setAttribute("aria-hidden", "true"); stars.appendChild(star); } stars.setAttribute("aria-label", `${earnedStars} von 3 Sternen`);
       document.getElementById("rpg-rating-message").textContent =
         earnedStars === 3 ? `Quest gemeistert! ${Math.round(score * 100)} %`
           : earnedStars === 2 ? `Fast perfekt! ${Math.round(score * 100)} %`
@@ -2614,7 +2685,7 @@
     }
 
     function stripVideoContent(markdown) {
-      const videoAssetOrFile =/(?:https?:\/\/github\.com\/[^\s<>"')]+\/assets\/[^\s<>"')]*|https?:\/\/user-images\.githubusercontent\.com\/[^\s<>"')]+|(?:https?:\/\/)?[^\s<>"')]+\.(?:mp4|webm|mov)(?:[?#][^\s<>"')]*)?)/i;
+      const videoAssetOrFile = /(?:https?:\/\/github\.com\/[^\s<>"')]+\/assets\/[^\s<>"')]*|https?:\/\/user-images\.githubusercontent\.com\/[^\s<>"')]+|(?:https?:\/\/)?[^\s<>"')]+\.(?:mp4|webm|mov)(?:[?#][^\s<>"')]*)?)/i;
 
       return markdown
         .replace(/<video\b[^>]*>[\s\S]*?<\/video\s*>/gi, "")
@@ -2729,12 +2800,12 @@
 
     const droneReadmeSources = [
       {
-        url: "https://raw.githubusercontent.com/fwolf-ph/PPO-Algorithmus-zur-Drohnensteuerung/main/README.md",
-        baseUrl: "https://github.com/fwolf-ph/PPO-Algorithmus-zur-Drohnensteuerung/blob/main/README.md"
+        url: "[https://raw.githubusercontent.com/fwolf-ph/PPO-Algorithmus-zur-Drohnensteuerung/main/README.md](https://raw.githubusercontent.com/fwolf-ph/PPO-Algorithmus-zur-Drohnensteuerung/main/README.md)",
+        baseUrl: "[https://github.com/fwolf-ph/PPO-Algorithmus-zur-Drohnensteuerung/blob/main/README.md](https://github.com/fwolf-ph/PPO-Algorithmus-zur-Drohnensteuerung/blob/main/README.md)"
       },
       {
-        url: "https://raw.githubusercontent.com/fwolf-ph/PPO-Algorithmus-zur-Drohnensteuerung/master/README.md",
-        baseUrl: "https://github.com/fwolf-ph/PPO-Algorithmus-zur-Drohnensteuerung/blob/master/README.md"
+        url: "[https://raw.githubusercontent.com/fwolf-ph/PPO-Algorithmus-zur-Drohnensteuerung/master/README.md](https://raw.githubusercontent.com/fwolf-ph/PPO-Algorithmus-zur-Drohnensteuerung/master/README.md)",
+        baseUrl: "[https://github.com/fwolf-ph/PPO-Algorithmus-zur-Drohnensteuerung/blob/master/README.md](https://github.com/fwolf-ph/PPO-Algorithmus-zur-Drohnensteuerung/blob/master/README.md)"
       }
     ];
     let droneReadmeLoaded = false;
@@ -2790,12 +2861,14 @@
     const launcherPanelByTab = {
       projects: document.getElementById("launcher-projects"),
       photography: document.getElementById("launcher-photography"),
-      slot03: document.getElementById("launcher-slot03")
+      slot03: document.getElementById("launcher-slot03"),
+      imprint: document.getElementById("launcher-imprint")
     };
     const launcherTitleByTab = {
       projects: "APP-DRAWER // PROJEKTE",
       photography: "APP-DRAWER // FOTOGRAFIE",
-      slot03: "APP-DRAWER // SLOT_03"
+      slot03: "APP-DRAWER // SLOT_03",
+      imprint: "APP-DRAWER // IMPRESSUM"
     };
     let photoGalleryLoaded = false;
 
