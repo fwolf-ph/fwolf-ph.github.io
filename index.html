@@ -2614,8 +2614,7 @@
     }
 
     function stripVideoContent(markdown) {
-      const videoAssetOrFile =
-        /(?:https?:\/\/github\.com\/[^\s<>"')]+\/assets\/[^\s<>"')]*|https?:\/\/user-images\.githubusercontent\.com\/[^\s<>"')]+|(?:https?:\/\/)?[^\s<>"')]+\.(?:mp4|webm|mov)(?:[?#][^\s<>"')]*)?)/i;
+      const videoAssetOrFile =/(?:https?:\/\/github\.com\/[^\s<>"')]+\/assets\/[^\s<>"')]*|https?:\/\/user-images\.githubusercontent\.com\/[^\s<>"')]+|(?:https?:\/\/)?[^\s<>"')]+\.(?:mp4|webm|mov)(?:[?#][^\s<>"')]*)?)/i;
 
       return markdown
         .replace(/<video\b[^>]*>[\s\S]*?<\/video\s*>/gi, "")
