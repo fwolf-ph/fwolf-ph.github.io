@@ -35,6 +35,7 @@
   let fetchTimer = null;
   let isFetching = false;
   let selectedAircraft = null;
+  let hoveredAircraftIcao = null;
 
   // Elements
   const canvas = document.getElementById("radar-canvas");
@@ -280,6 +281,7 @@
     const dpr = window.devicePixelRatio || 1;
     canvas.width = Math.round(rect.width * dpr);
     canvas.height = Math.round(rect.height * dpr);
+    drawRadar();
   }
   window.addEventListener("resize", resizeCanvas);
 
@@ -536,44 +538,6 @@
     ctx.restore();
   }
 
-  function easeOutCubic(progress) {
-    return 1 - Math.pow(1 - progress, 3);
-  }
-
-  function getInterpolatedHeading(ac, now) {
-    const target = Number.isFinite(ac.heading) ? ((ac.heading % 360) + 360) % 360 : 0;
-    if (ac.headingStartTs == null || !Number.isFinite(ac.headingFrom)) return target;
-
-    const from = ((ac.headingFrom % 360) + 360) % 360;
-    const progress = Math.min(Math.max((now - ac.headingStartTs) / 800, 0), 1);
-    const shortestTurn = ((target - from + 540) % 360) - 180;
-    return (from + shortestTurn * easeOutCubic(progress) + 360) % 360;
-  }
-
-  function getInterpolatedCoords(ac, now) {
-    const dtSec = Math.min(Math.max((now - ac.lastUpdateTs) / 1000, 0), 5);
-    const speedMetersPerSecond = Number.isFinite(ac.velocity)
-      ? Math.max(0, ac.velocity) * 0.514444
-      : 0;
-    const distanceMeters = speedMetersPerSecond * dtSec;
-    const headingRad = getInterpolatedHeading(ac, now) * Math.PI / 180;
-    const latitudeRad = ac.lat * Math.PI / 180;
-    let predLat = ac.lat + (distanceMeters * Math.cos(headingRad)) / 111320;
-    let predLon = ac.lon + (distanceMeters * Math.sin(headingRad)) /
-      (111320 * Math.cos(latitudeRad));
-
-    if (ac.blendStartTs != null &&
-        Number.isFinite(ac.blendFromLat) &&
-        Number.isFinite(ac.blendFromLon)) {
-      const progress = Math.min(Math.max((now - ac.blendStartTs) / 800, 0), 1);
-      const remainingCorrection = 1 - easeOutCubic(progress);
-      predLat += (ac.blendFromLat - ac.lat) * remainingCorrection;
-      predLon += (ac.blendFromLon - ac.lon) * remainingCorrection;
-    }
-
-    return { lat: predLat, lon: predLon };
-  }
-
   // Main Radar Canvas Rendering
   function drawRadar() {
     const dpr = window.devicePixelRatio || 1;
@@ -761,25 +725,20 @@
     ctx.fillText("TOWER", twrPos.x + 8 * dpr, twrPos.y + 3 * dpr);
 
     // 9. Aircraft Rendering (with exact ground & flight positioning)
-    const now = performance.now();
     aircraftList.forEach(ac => {
       if (ac.lat == null || ac.lon == null) return;
-      const aircraftPosition = getInterpolatedCoords(ac, now);
-      const aircraftHeading = getInterpolatedHeading(ac, now);
-      ac._renderLat = aircraftPosition.lat;
-      ac._renderLon = aircraftPosition.lon;
-      const pos = geoToCanvas(aircraftPosition.lat, aircraftPosition.lon);
+      const pos = geoToCanvas(ac.lat, ac.lon);
 
       ac._screenX = pos.rawX;
       ac._screenY = pos.rawY;
 
       if (selectedAircraft && selectedAircraft.icao24 === ac.icao24 && pokeModal && !pokeModal.hidden) {
-        const headingRad = aircraftHeading * Math.PI / 180;
+        const headingRad = (Number.isFinite(ac.heading) ? ac.heading : 0) * Math.PI / 180;
         const vectorDistanceMeters = 8000;
-        const latitudeRad = aircraftPosition.lat * Math.PI / 180;
+        const latitudeRad = ac.lat * Math.PI / 180;
         const vectorEnd = geoToCanvas(
-          aircraftPosition.lat + (vectorDistanceMeters * Math.cos(headingRad)) / 111320,
-          aircraftPosition.lon + (vectorDistanceMeters * Math.sin(headingRad)) /
+          ac.lat + (vectorDistanceMeters * Math.cos(headingRad)) / 111320,
+          ac.lon + (vectorDistanceMeters * Math.sin(headingRad)) /
             (111320 * Math.cos(latitudeRad))
         );
         ctx.save();
@@ -796,7 +755,7 @@
       ctx.save();
       ctx.translate(pos.x, pos.y);
 
-      ctx.rotate(aircraftHeading * Math.PI / 180);
+      ctx.rotate((Number.isFinite(ac.heading) ? ac.heading : 0) * Math.PI / 180);
 
       // Aircraft top-down silhouette
       // Ground planes: Dark Red (#8B0000), or inverted #74FFFF in dark mode so it stays deep dark red
@@ -849,6 +808,12 @@
         ctx.strokeStyle = "#000000";
         ctx.lineWidth = 1.5 * dpr;
         ctx.setLineDash([2 * dpr, 2 * dpr]);
+        ctx.strokeRect(pos.x - 12 * dpr, pos.y - 12 * dpr, 24 * dpr, 24 * dpr);
+        ctx.setLineDash([]);
+      } else if (hoveredAircraftIcao === ac.icao24) {
+        ctx.strokeStyle = "#000000";
+        ctx.lineWidth = 1 * dpr;
+        ctx.setLineDash([1 * dpr, 2 * dpr]);
         ctx.strokeRect(pos.x - 12 * dpr, pos.y - 12 * dpr, 24 * dpr, 24 * dpr);
         ctx.setLineDash([]);
       }
@@ -987,9 +952,6 @@
         });
       }
 
-      const updatedAt = performance.now();
-      const previousAircraft = new Map(aircraftList.map(ac => [ac.icao24, ac]));
-
       // Filter: Bodenfahrzeuge (TXLU01 etc.) mit category === "C0" oder type === "adsb_icao_nt" herausfiltern
       const filteredAc = acArray.filter(ac => {
         if (!ac) return false;
@@ -1028,19 +990,6 @@
         };
         if (!Number.isFinite(aircraft.velocity)) aircraft.velocity = 0;
         if (!Number.isFinite(aircraft.heading)) aircraft.heading = 0;
-        const previous = previousAircraft.get(aircraft.icao24);
-        let previousPosition = { lat: aircraft.lat, lon: aircraft.lon };
-        if (previous) {
-          previousPosition = Number.isFinite(previous._renderLat) && Number.isFinite(previous._renderLon)
-            ? { lat: previous._renderLat, lon: previous._renderLon }
-            : getInterpolatedCoords(previous, updatedAt);
-        }
-        aircraft.headingFrom = previous ? getInterpolatedHeading(previous, updatedAt) : aircraft.heading;
-        aircraft.headingStartTs = previous ? updatedAt : null;
-        aircraft.lastUpdateTs = updatedAt;
-        aircraft.blendFromLat = previousPosition.lat;
-        aircraft.blendFromLon = previousPosition.lon;
-        aircraft.blendStartTs = previous ? updatedAt : null;
         return aircraft;
       }).filter(a => !isNaN(a.lat) && !isNaN(a.lon));
 
@@ -1048,6 +997,9 @@
 
       if (rawAircraft.length === 0) {
         aircraftList = [];
+        hoveredAircraftIcao = null;
+        canvas.style.cursor = "";
+        drawRadar();
         if (liveCountElem) liveCountElem.textContent = "0 FLIEGER";
         showOverlay(
           "INFO // AKTUELL KEINE FLUGZEUGE IM RADARBEREICH",
@@ -1058,21 +1010,43 @@
 
       hideOverlay();
       aircraftList = rawAircraft;
+      if (hoveredAircraftIcao && !aircraftList.some(ac => ac.icao24 === hoveredAircraftIcao)) {
+        hoveredAircraftIcao = null;
+        canvas.style.cursor = "";
+      }
 
       if (liveCountElem) liveCountElem.textContent = `${aircraftList.length} FLIEGER`;
 
       // Update opened card if aircraft is selected
       if (selectedAircraft) {
-        const updated = aircraftList.find(a => a.icao24 === selectedAircraft.icao24);
-        if (updated) {
-          selectedAircraft = { ...selectedAircraft, ...updated };
-          updateCardContent(selectedAircraft);
+        try {
+          const updated = aircraftList.find(a => a.icao24 === selectedAircraft.icao24);
+          if (updated) {
+            Object.assign(selectedAircraft, {
+              lat: updated.lat,
+              lon: updated.lon,
+              altitude: updated.altitude,
+              baroAltitude: updated.baroAltitude,
+              velocity: updated.velocity,
+              heading: updated.heading,
+              verticalRate: updated.verticalRate,
+              squawk: updated.squawk,
+              onGround: updated.onGround
+            });
+            updateCardContent(selectedAircraft);
+          }
+        } catch (e) {
+          console.error("[MUC-RADAR] Pokémon-Karte konnte nicht aktualisiert werden:", e);
         }
       }
 
+      drawRadar();
     } catch (err) {
       console.warn("[MUC-RADAR] Fehler beim Laden der Live-Daten:", err);
       aircraftList = [];
+      hoveredAircraftIcao = null;
+      canvas.style.cursor = "";
+      drawRadar();
       if (liveCountElem) liveCountElem.textContent = "OFFLINE";
       showOverlay(
         "ERR // API-VERBINDUNG FEHLGESCHLAGEN – KEINE LIVE-DATEN VERFÜGBAR",
@@ -1086,6 +1060,42 @@
       fetchTimer = setTimeout(fetchLiveAircraft, nextDelay);
     }
   }
+
+  function findAircraftAtPoint(x, y) {
+    let hit = null;
+    let minDistance = 24;
+    aircraftList.forEach(ac => {
+      if (ac._screenX == null || ac._screenY == null) return;
+      const dx = ac._screenX - x;
+      const dy = ac._screenY - y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      if (distance < minDistance) {
+        minDistance = distance;
+        hit = ac;
+      }
+    });
+    return hit;
+  }
+
+  canvas.addEventListener("mousemove", (e) => {
+    if (isDragging) return;
+    const rect = canvas.getBoundingClientRect();
+    const hit = findAircraftAtPoint(e.clientX - rect.left, e.clientY - rect.top);
+    const nextHoveredIcao = hit ? hit.icao24 : null;
+    if (hoveredAircraftIcao !== nextHoveredIcao) {
+      hoveredAircraftIcao = nextHoveredIcao;
+      canvas.style.cursor = hit ? "pointer" : "";
+      drawRadar();
+    }
+  });
+
+  canvas.addEventListener("mouseleave", () => {
+    if (hoveredAircraftIcao !== null) {
+      hoveredAircraftIcao = null;
+      canvas.style.cursor = "";
+      drawRadar();
+    }
+  });
 
   // ==========================================
   // PANNING & ZOOMING INTERACTION
@@ -1117,6 +1127,7 @@
     // Convert pixel delta to km delta
     panOffsetX = dragStartPanX + dxPx / pixelsPerKm;
     panOffsetY = dragStartPanY - dyPx / pixelsPerKm;
+    drawRadar();
   });
 
   window.addEventListener("mouseup", (e) => {
@@ -1132,6 +1143,7 @@
     const zoomFactor = e.deltaY > 0 ? 1.25 : 0.8;
     currentKmSpan = Math.max(0.5, Math.min(100.0, currentKmSpan * zoomFactor));
     updateZoomButtons();
+    drawRadar();
   }, { passive: false });
 
   // Touch pinch & pan
@@ -1168,6 +1180,7 @@
 
       panOffsetX = dragStartPanX + dxPx / pixelsPerKm;
       panOffsetY = dragStartPanY - dyPx / pixelsPerKm;
+      drawRadar();
     } else if (e.touches.length === 2 && touchStartDist > 0) {
       const dx = e.touches[0].clientX - e.touches[1].clientX;
       const dy = e.touches[0].clientY - e.touches[1].clientY;
@@ -1175,6 +1188,7 @@
       const factor = touchStartDist / dist;
       currentKmSpan = Math.max(0.5, Math.min(100.0, touchStartSpan * factor));
       updateZoomButtons();
+      drawRadar();
     }
   }, { passive: true });
 
@@ -1191,24 +1205,13 @@
     const clickX = e.clientX - rect.left;
     const clickY = e.clientY - rect.top;
 
-    let hit = null;
-    let minD = 24;
-
-    aircraftList.forEach(ac => {
-      if (ac._screenX == null || ac._screenY == null) return;
-      const dx = ac._screenX - clickX;
-      const dy = ac._screenY - clickY;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < minD) {
-        minD = dist;
-        hit = ac;
-      }
-    });
+    const hit = findAircraftAtPoint(clickX, clickY);
 
     if (hit) {
       openPokemonCard(hit);
     } else {
       selectedAircraft = null;
+      drawRadar();
     }
   });
 
@@ -1226,6 +1229,7 @@
     panOffsetX = 0; // Auto-center to EDDM airport center
     panOffsetY = 0;
     updateZoomButtons();
+    drawRadar();
   }
 
   if (zoomBtn0) zoomBtn0.addEventListener("click", () => setPresetZoom(0));
@@ -1236,8 +1240,6 @@
 
   if (resetPanBtn) {
     resetPanBtn.addEventListener("click", () => {
-      panOffsetX = 0;
-      panOffsetY = 0;
       setPresetZoom(0);
     });
   }
@@ -1630,8 +1632,12 @@
   async function openPokemonCard(ac) {
     selectedAircraft = ac;
 
-    if (!pokeModal) return;
+    if (!pokeModal) {
+      drawRadar();
+      return;
+    }
     pokeModal.hidden = false;
+    drawRadar();
 
     updateCardContent(ac);
 
@@ -1741,7 +1747,7 @@
   function closePokemonCard() {
     if (pokeModal) pokeModal.hidden = true;
     selectedAircraft = null;
-    currentRouteCallsign = null;
+    drawRadar();
   }
 
   if (pokeCloseBtn) pokeCloseBtn.addEventListener("click", closePokemonCard);
@@ -1773,12 +1779,4 @@
   resizeCanvas();
   updateZoomButtons();
   void fetchLiveAircraft();
-  function startRenderLoop() {
-    function renderFrame() {
-      drawRadar();
-      requestAnimationFrame(renderFrame);
-    }
-    requestAnimationFrame(renderFrame);
-  }
-  startRenderLoop();
 })();
