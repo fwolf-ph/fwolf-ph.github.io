@@ -880,9 +880,7 @@
   // LIVE API (Dedicated Cloudflare Worker)
   // ==========================================
   const LIVE_ENDPOINTS = [
-    "https://radar.fwolfph.workers.dev/",
-    "https://api.adsb.lol/v2/lat/48.3538/lon/11.7861/dist/50",
-    "https://api.airplanes.live/v2/point/48.3538/11.7861/50"
+    "https://radar.fwolfph.workers.dev/"
   ];
 
   // Known ICAO Type Codes to Clean Names
