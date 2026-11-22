@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#111827">
+  <title>MUC Live Radar // EDDM fwolf-ph</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script defer src="assets/js/system.js"></script>
+  <script defer src="assets/js/muc-radar.js"></script>
+</head>
+<body class="bit-mode">
+  <header id="system-bar" class="system-bar">
+    <strong class="system-label">SYS // FWOLF-PH</strong>
+    <div class="system-meta">
+      <time id="system-time" aria-label="Uhrzeit">--:--:--</time>
+      <time id="system-date" aria-label="Datum">----</time>
+      <button id="theme-btn" class="system-theme-button" type="button" data-theme-toggle aria-label="Farbschema invertieren">Dark 1-Bit: Weiß auf Schwarz</button>
+    </div>
+  </header>
+
+  <section id="muc-radar-view" class="launcher-view">
+    <main class="launcher-shell radar-shell">
+      <section class="launcher-window radar-window" aria-labelledby="radar-window-title">
+        <div class="window-titlebar" id="radar-window-title">RADAR.SYS // EDDM - MUNICH AIRPORT LIVE ADS-B</div>
+        
+        <div class="radar-toolbar">
+          <div class="radar-controls">
+            <span>ZOOM:</span>
+            <button id="zoom-btn-0" class="radar-btn active" type="button">0x ULTRA NAH (GATES)</button>
+            <button id="zoom-btn-1" class="radar-btn" type="button">1x VORFELD/BAHNEN</button>
+            <button id="zoom-btn-2" class="radar-btn" type="button">2x ANFLUG/ABFLUG</button>
+            <button id="zoom-btn-3" class="radar-btn" type="button">3x UMLAND</button>
+            <button id="zoom-btn-4" class="radar-btn" type="button">4x REGION (OBERBAYERN)</button>
+            <button id="radar-reset-pan" class="radar-btn" type="button" title="Auf Flughafen-Zentrum zentrieren">⌖ RESET</button>
+          </div>
+          <div class="radar-status-bar">
+            <span class="pixel-led" aria-hidden="true"></span>
+            <span id="radar-live-count">0 FLIEGER</span>
+            <span>// UPDATE: <span id="radar-last-update">--:--:--</span></span>
+          </div>
+        </div>
+
+        <div class="radar-canvas-container" id="radar-container">
+          <canvas id="radar-canvas"></canvas>
+
+          <div id="radar-overlay-msg" class="radar-overlay-msg" hidden>
+            <h3 id="overlay-title">ERR // API-VERBINDUNG FEHLGESCHLAGEN</h3>
+            <p id="overlay-text">Keine Live-Daten verfügbar.</p>
+            <button id="overlay-retry-btn" class="radar-btn" type="button">ERNEUT VERSUCHEN</button>
+          </div>
+        </div>
+      </section>
+
+      <a id="radar-back-btn" class="btn secondary" href="index.html">← Zurück zum Launcher</a>
+    </main>
+  </section>
+
+  <!-- POKÉMON-STYLE CARD MODAL -->
+  <div id="poke-modal" class="poke-modal-backdrop" hidden>
+    <div class="poke-card" role="dialog" aria-modal="true" aria-labelledby="poke-name">
+      <!-- Header -->
+      <div class="poke-header">
+        <span id="poke-name" class="poke-title">CALLSIGN</span>
+        <div class="poke-hp-wrap">
+          <span id="poke-hp">ALT 0 FT</span>
+          <span id="poke-type-badge" class="poke-badge-type">AIR</span>
+        </div>
+      </div>
+
+      <!-- Artwork Box with 1-Bit Pixel Art Aircraft -->
+      <div class="poke-art-frame" id="poke-art-container">
+        <div class="poke-art-bg-dither" aria-hidden="true"></div>
+      </div>
+
+      <!-- Special Livery Badge (shown only for special liveries) -->
+      <div id="poke-livery-badge" class="poke-livery-badge" hidden>★ SPECIAL LIVERY: <span id="poke-livery-text"></span></div>
+
+      <!-- Aircraft Model Banner -->
+      <div id="poke-type-name" class="poke-aircraft-name">AIRCRAFT MODEL</div>
+
+      <!-- Route Banner -->
+      <div id="poke-route-bar" class="poke-route-bar">
+        <span class="poke-route-icon">✈</span>
+        <span id="poke-route-text">ROUTE WIRD ERMITTELT...</span>
+      </div>
+
+      <!-- Subinfo bar -->
+      <div class="poke-subinfo">
+        <span id="poke-subinfo-text">REG: ---- // OPERATOR</span>
+      </div>
+
+      <!-- Attack / Telemetry rows -->
+      <div class="poke-attacks">
+        <div class="poke-attack-row">
+          <span class="poke-attack-label">
+            <svg viewBox="0 0 16 16" width="12" height="12" shape-rendering="crispEdges"><path fill="currentColor" d="M1 8h10v2H1zm10-4l4 5-4 5V4z"/></svg>
+            GESCHWINDIGKEIT (GS)
+          </span>
+          <span id="poke-val-speed" class="poke-attack-val">--- KT</span>
+        </div>
+        <div class="poke-attack-row">
+          <span class="poke-attack-label">
+            <svg viewBox="0 0 16 16" width="12" height="12" shape-rendering="crispEdges"><path fill="currentColor" d="M8 1l5 7h-3v7H6V8H3z"/></svg>
+            KURS & STEIGRATE
+          </span>
+          <span id="poke-val-course" class="poke-attack-val">HDG ---° // V/S 0</span>
+        </div>
+        <div class="poke-attack-row">
+          <span class="poke-attack-label">
+            <svg viewBox="0 0 16 16" width="12" height="12" shape-rendering="crispEdges"><path fill="currentColor" d="M2 3h12v2H2zm2 4h8v2H4zm2 4h4v2H6z"/></svg>
+            STATUS / TRANSPONDER
+          </span>
+          <span id="poke-val-status" class="poke-attack-val">REISEFLUG [----]</span>
+        </div>
+      </div>
+
+      <!-- Footer / Flavor -->
+      <div class="poke-footer">
+        <div class="poke-flavor">EDDM RADAR DEX // LIVE ADS-B TELEMETRY</div>
+        <button id="poke-close-btn" class="poke-close-btn" type="button">[ X ] KARTE SCHLIESSEN</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
