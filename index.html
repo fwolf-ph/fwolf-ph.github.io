@@ -40,10 +40,24 @@
       <div class="launcher-layout">
         <nav class="launcher-sidebar launcher-window" aria-label="Launcher-Menü">
           <div class="launcher-sidebar-title">NAVIGATION</div>
-          <a class="sidebar-item active" href="index.html" aria-current="page">
-            <svg viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path fill="currentColor" d="M1 1h6v6H1zm8 0h6v6H9zM1 9h6v6H1zm8 0h6v6H9z"/></svg>
-            <span>PROJEKTE</span>
-          </a>
+          <div class="sidebar-group">
+            <a class="sidebar-item active" id="nav-projects-toggle" href="index.html" aria-expanded="true" aria-current="page">
+              <svg viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path fill="currentColor" d="M1 1h6v6H1zm8 0h6v6H9zM1 9h6v6H1zm8 0h6v6H9z"/></svg>
+              <span>PROJEKTE</span>
+            </a>
+            <div class="sidebar-subnav" id="projects-subnav">
+              <a class="sidebar-subitem" href="index.html?category=tum" data-project-sub="tum">
+                <span class="sidebar-subitem-branch" aria-hidden="true">├─</span>
+                <svg viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path fill="currentColor" d="M1 2h14v3h-2v9h-3V5H6v9H3V5H1z"/></svg>
+                <span>Physik TUM</span>
+              </a>
+              <a class="sidebar-subitem" href="index.html?category=sonstiges" data-project-sub="sonstiges">
+                <span class="sidebar-subitem-branch" aria-hidden="true">└─</span>
+                <svg viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path fill="currentColor" d="M2 2h4v4H2zm8 0h4v4h-4zM2 10h4v4H2zm8 0h4v4h-4z"/></svg>
+                <span>Sonstiges</span>
+              </a>
+            </div>
+          </div>
           <a class="sidebar-item" href="fotografie.html">
             <svg viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path fill="currentColor" d="M5 1h6l1 2h3v12H1V3h3zm1 2L5 5H3v8h10V5h-2l-1-2zm2 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6m0 2a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/></svg>
             <span>FOTOGRAFIE</span>
@@ -62,21 +76,25 @@
           <div class="window-titlebar" id="launcher-window-title">APP-DRAWER // PROJEKTE</div>
           <section id="launcher-projects" class="launcher-panel" aria-label="Projekte">
             <div class="project-grid">
-              <a class="project-tile project-tile-active" href="physik4.html">
+              <a class="project-tile project-tile-active" href="physik4.html" data-project-category="tum">
                 <span class="project-icon" aria-hidden="true"><svg viewBox="0 0 16 16" role="img" shape-rendering="crispEdges"><path fill="currentColor" d="M2 1h12v14H2zm2 2v2h2V3zm4 0v2h4V3zM4 7v2h2V7zm4 0v2h4V7zm-4 4v2h8v-2z"/></svg></span>
                 <span class="project-title">Theoretische Physik 4 – Minitests</span>
                 <span class="launcher-badge">AKTIV</span>
               </a>
-              <a class="project-tile project-tile-active" href="drohne.html">
+              <a class="project-tile project-tile-active" href="drohne.html" data-project-category="tum">
                 <span class="project-icon" aria-hidden="true"><svg viewBox="0 0 16 16" role="img" shape-rendering="crispEdges"><path fill="currentColor" d="M1 1h4v2H3v2H1zm10 0h4v4h-2V3h-2zM1 11h2v2h2v2H1zm12 0h2v4h-4v-2h2zM4 5h2v2H4zm6 0h2v2h-2zM5 6h6v2h2v2h-2v2H5v-2H3V8h2zm2 6h2v2H7z"/></svg></span>
                 <span class="project-title">PPO-Algorithmus zur Drohnensteuerung</span>
                 <span class="launcher-badge">AKTIV</span>
               </a>
-              <article class="project-tile project-tile-placeholder">
-                <span class="project-icon" aria-hidden="true"><svg viewBox="0 0 16 16" role="img" shape-rendering="crispEdges"><path fill="currentColor" d="M2 2h5v5H2zm7 0h5v5H9zM2 9h5v5H2zm7 0h5v5H9z"/></svg></span>
-                <span class="project-title">NEUES PROJEKT</span>
-                <span class="project-meta">COMING SOON // 03</span>
-              </article>
+              <a class="project-tile project-tile-active" href="muc-radar.html" data-project-category="sonstiges">
+                <span class="project-icon" aria-hidden="true">
+                  <svg viewBox="0 0 16 16" role="img" shape-rendering="crispEdges">
+                    <path fill="currentColor" d="M7 1h2v3h4v2H9v3h5v2H9v3h2v1H5v-1h2v-3H2v-2h5V6H3V4h4V1z"/>
+                  </svg>
+                </span>
+                <span class="project-title">Flughafen München (MUC) – Live Radar</span>
+                <span class="launcher-badge">AKTIV</span>
+              </a>
             </div>
           </section>
         </section>
