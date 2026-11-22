@@ -32,6 +32,7 @@
   let hasDragged = false;
 
   let aircraftList = [];
+  let fetchTimer = null;
   let isFetching = false;
   let lastServerTimestamp = 0;
   let selectedAircraft = null;
@@ -912,21 +913,37 @@
     "DH8D": "DE HAVILLAND DASH 8-400"
   };
 
+  function scheduleNextFetch(delay) {
+    clearTimeout(fetchTimer);
+    fetchTimer = setTimeout(() => {
+      fetchTimer = null;
+      void fetchLiveAircraft();
+    }, delay);
+  }
+
   async function fetchLiveAircraft() {
     if (isFetching) return;
+    clearTimeout(fetchTimer);
+    fetchTimer = null;
     isFetching = true;
 
     console.info(`[MUC-RADAR] Starte Live-Abfrage via Cloudflare Worker: ${RADAR_API_URL}`);
     let timeoutId;
+    let rateLimited = false;
     try {
       const controller = new AbortController();
       timeoutId = setTimeout(() => controller.abort(), 2500);
 
       // Ohne eigene Request-Header aufrufen, um jeden OPTIONS-Preflight zu verhindern
-      const resp = await fetch(`${RADAR_API_URL}?_=${Date.now()}`, {
-        cache: "no-store",
+      const resp = await fetch(RADAR_API_URL, {
         signal: controller.signal
       });
+
+      if (resp.status === 429) {
+        rateLimited = true;
+        console.warn("[MUC-RADAR] HTTP 429: Live-Abfrage pausiert, vorhandene Radardaten bleiben erhalten.");
+        return;
+      }
 
       if (!resp.ok) {
         throw new Error(`HTTP ${resp.status} ${resp.statusText || ""}`.trim());
@@ -1059,6 +1076,7 @@
     } finally {
       clearTimeout(timeoutId);
       isFetching = false;
+      scheduleNextFetch(rateLimited ? 5000 : document.hidden ? 15000 : 2000);
     }
   }
 
@@ -1877,7 +1895,14 @@
   }
 
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) void fetchLiveAircraft();
+    clearTimeout(fetchTimer);
+    fetchTimer = null;
+    if (isFetching) return;
+    if (document.hidden) {
+      scheduleNextFetch(15000);
+    } else {
+      void fetchLiveAircraft();
+    }
   });
 
   window.addEventListener("keydown", (e) => {
@@ -1890,7 +1915,4 @@
   resizeCanvas();
   updateZoomButtons();
   void fetchLiveAircraft();
-  setInterval(() => {
-    if (!document.hidden) void fetchLiveAircraft();
-  }, 1000);
 })();
