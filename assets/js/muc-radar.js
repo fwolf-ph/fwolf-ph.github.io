@@ -732,24 +732,54 @@
       ac._screenX = pos.rawX;
       ac._screenY = pos.rawY;
 
-      if (selectedAircraft && selectedAircraft.icao24 === ac.icao24 && pokeModal && !pokeModal.hidden) {
-        const headingRad = (Number.isFinite(ac.heading) ? ac.heading : 0) * Math.PI / 180;
-        const vectorDistanceMeters = 8000;
-        const latitudeRad = ac.lat * Math.PI / 180;
-        const vectorEnd = geoToCanvas(
-          ac.lat + (vectorDistanceMeters * Math.cos(headingRad)) / 111320,
-          ac.lon + (vectorDistanceMeters * Math.sin(headingRad)) /
-            (111320 * Math.cos(latitudeRad))
-        );
-        ctx.save();
-        ctx.strokeStyle = "#000000";
-        ctx.lineWidth = 1 * dpr;
-        ctx.setLineDash([4 * dpr, 3 * dpr]);
-        ctx.beginPath();
-        ctx.moveTo(pos.x, pos.y);
-        ctx.lineTo(vectorEnd.x, vectorEnd.y);
-        ctx.stroke();
-        ctx.restore();
+      if (selectedAircraft && selectedAircraft.icao24 === ac.icao24) {
+        const heading = Number(ac.track ?? ac.true_heading ?? ac.mag_heading ?? ac.heading);
+        if (Number.isFinite(heading)) {
+          const headingRad = heading * Math.PI / 180;
+          const vectorDistanceMeters = 8000;
+          const latitudeRad = ac.lat * Math.PI / 180;
+          const vectorEnd = geoToCanvas(
+            ac.lat + (vectorDistanceMeters * Math.cos(headingRad)) / 111320,
+            ac.lon + (vectorDistanceMeters * Math.sin(headingRad)) /
+              (111320 * Math.cos(latitudeRad))
+          );
+          const directionX = vectorEnd.x - pos.x;
+          const directionY = vectorEnd.y - pos.y;
+          const angle = Math.atan2(directionY, directionX);
+          const arrowLength = 12 * dpr;
+          const arrowHalfWidth = 5 * dpr;
+
+          ctx.save();
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+          ctx.setLineDash([]);
+          ctx.strokeStyle = "#ffffff";
+          ctx.lineWidth = 5 * dpr;
+          ctx.beginPath();
+          ctx.moveTo(pos.x, pos.y);
+          ctx.lineTo(vectorEnd.x, vectorEnd.y);
+          ctx.stroke();
+          ctx.strokeStyle = "#000000";
+          ctx.lineWidth = 2 * dpr;
+          ctx.stroke();
+          ctx.fillStyle = "#ffffff";
+          ctx.beginPath();
+          ctx.moveTo(vectorEnd.x, vectorEnd.y);
+          ctx.lineTo(
+            vectorEnd.x - arrowLength * Math.cos(angle) + arrowHalfWidth * Math.sin(angle),
+            vectorEnd.y - arrowLength * Math.sin(angle) - arrowHalfWidth * Math.cos(angle)
+          );
+          ctx.lineTo(
+            vectorEnd.x - arrowLength * Math.cos(angle) - arrowHalfWidth * Math.sin(angle),
+            vectorEnd.y - arrowLength * Math.sin(angle) + arrowHalfWidth * Math.cos(angle)
+          );
+          ctx.closePath();
+          ctx.fill();
+          ctx.strokeStyle = "#000000";
+          ctx.lineWidth = 2 * dpr;
+          ctx.stroke();
+          ctx.restore();
+        }
       }
 
       ctx.save();
@@ -978,7 +1008,7 @@
           baroAltitude: altitude / 3.28084, // in m
           onGround: onGround,
           velocity: Number(ac.gs || 0), // in kt
-          heading: Number(ac.track ?? ac.true_heading ?? 0),
+          heading: Number(ac.track ?? ac.true_heading ?? ac.mag_heading ?? 0),
           verticalRate: Math.round(Number(ac.baro_rate || ac.geom_rate || 0)), // in ft/min
           squawk: ac.squawk || "----",
           aircraftTypeCode: typeCode,
@@ -1366,17 +1396,23 @@
     LHX: "LUFTHANSA CITY",
     CLH: "LUFTHANSA CITYLINE",
     EWG: "EUROWINGS",
+    EWU: "EUROWINGS",
     OCN: "DISCOVER AIRLINES",
     CFG: "CONDOR",
     TUI: "TUIFLY",
     AUA: "AUSTRIAN AIRLINES",
     SWR: "SWISS",
     BAW: "BRITISH AIRWAYS",
+    SHT: "BRITISH AIRWAYS SHUTTLE",
     AFR: "AIR FRANCE",
+    HOP: "AIR FRANCE HOP",
     KLM: "KLM",
+    KLC: "KLM CITYHOPPER",
     IBE: "IBERIA",
+    IBS: "IBERIA EXPRESS",
     TAP: "TAP AIR PORTUGAL",
     AZA: "ITA AIRWAYS",
+    ITY: "ITA AIRWAYS",
     SAS: "SAS",
     FIN: "FINNAIR",
     LOT: "LOT POLISH AIRLINES",
@@ -1392,8 +1428,13 @@
     SIA: "SINGAPORE AIRLINES",
     CPA: "CATHAY PACIFIC",
     RYR: "RYANAIR",
+    RUK: "RYANAIR UK",
+    LDA: "LAUDA EUROPE",
     EZY: "EASYJET",
+    EJU: "EASYJET EUROPE",
     WZZ: "WIZZ AIR",
+    WMT: "WIZZ AIR MALTA",
+    WUK: "WIZZ AIR UK",
     VLG: "VUELING",
     PGT: "PEGASUS AIRLINES",
     SXS: "SUNEXPRESS",
@@ -1404,24 +1445,49 @@
     CRO: "CROATIA AIRLINES",
     AEE: "AEGEAN AIRLINES",
     MSR: "EGYPTAIR",
-    RAM: "ROYAL AIR MAROC"
+    RAM: "ROYAL AIR MAROC",
+    JFA: "JETFLY",
+    VJT: "VISTAJET",
+    SVA: "SAUDI ARABIAN AIRLINES",
+    PIA: "PAKISTAN INTERNATIONAL AIRLINES",
+    RJA: "ROYAL JORDANIAN",
+    MSC: "AIR CAIRO",
+    EDL: "EUROPEAN AIR TRANSPORT",
+    CHX: "CHALAIR AVIATION",
+    ENT: "ENTER AIR"
   };
 
   function resolveAirlineName(ac, hexData) {
     const ownOperator = String(ac.ownOp || "").trim();
     if (ownOperator && ownOperator.toUpperCase() !== "UNBEKANNT") return ownOperator;
 
-    const registeredOwners = String((hexData && hexData.RegisteredOwners) || "").trim();
+    const registeredOwners = String(
+      (hexData && (hexData.RegisteredOwners || hexData.Owner)) || ""
+    ).trim();
     if (registeredOwners && !["UNBEKANNT", "UNKNOWN"].includes(registeredOwners.toUpperCase())) {
       return registeredOwners;
     }
 
     const callsign = String(ac.callsign || "").trim().toUpperCase();
-    const callsignPrefix = callsign.slice(0, 3);
-    if (/^[A-Z]{3}[A-Z0-9]/.test(callsign)) {
-      return ICAO_AIRLINES[callsignPrefix] || "UNBEKANNT";
-    }
-    return "UNBEKANNT";
+    const callsignPrefix = callsign.match(/^([A-Z]{3})/)?.[1];
+    if (callsignPrefix && ICAO_AIRLINES[callsignPrefix]) return ICAO_AIRLINES[callsignPrefix];
+
+    const registration = String(ac.registration || (hexData && hexData.Registration) || "")
+      .trim().toUpperCase();
+    const registrationCountry = [
+      [/^(D-)/, "GERMANY"],
+      [/^(OE-)/, "AUSTRIA"],
+      [/^(HB-)/, "SWITZERLAND"],
+      [/^(N-?)/, "UNITED STATES"],
+      [/^(G-)/, "UNITED KINGDOM"],
+      [/^(PH-)/, "NETHERLANDS"],
+      [/^(9H-)/, "MALTA"],
+      [/^(SU-)/, "EGYPT"],
+      [/^(SP-)/, "POLAND"],
+      [/^(LX-)/, "LUXEMBOURG"]
+    ].find(([pattern]) => pattern.test(registration));
+    if (registrationCountry) return `REGISTERED IN ${registrationCountry[1]}`;
+    return registration ? "OPERATOR UNKNOWN" : "UNBEKANNT";
   }
 
   function getPixelArtSvg(catId) {
@@ -1585,20 +1651,43 @@
     return from && to ? `${from} ✈ ${to}` : "";
   }
 
+  function formatAirportSequence(value) {
+    if (Array.isArray(value) && value.length >= 2) {
+      return formatRoute(value[0], value[value.length - 1]);
+    }
+    if (typeof value === "string") {
+      const airports = value.trim().toUpperCase().split(/[\s,;>→-]+/).filter(Boolean);
+      return airports.length >= 2 ? formatRoute(airports[0], airports[airports.length - 1]) : "";
+    }
+    if (!value || typeof value !== "object") return "";
+
+    const airportList = value._airports || value.airports || value.airport_route || value.airport_codes;
+    if (Array.isArray(airportList) && airportList.length >= 2) {
+      return formatRoute(airportList[0], airportList[airportList.length - 1]);
+    }
+    const endpoints = formatRoute(
+      value.origin || value.from,
+      value.destination || value.to
+    );
+    if (endpoints) return endpoints;
+    return formatAirportSequence(value.route || value._route);
+  }
+
   function parseWorkerRoute(data) {
-    const items = Array.isArray(data) ? data : [data];
+    if (!data || typeof data !== "object") return "";
+    const items = Array.isArray(data) ? [...data] : [data];
+    if (!Array.isArray(data)) {
+      for (const field of ["planes", "results", "data"]) {
+        if (Array.isArray(data[field])) items.push(...data[field]);
+        else if (data[field] && typeof data[field] === "object") items.push(data[field]);
+      }
+    }
     for (const item of items) {
       if (!item || typeof item !== "object") continue;
-      const airports = item._airports || data._airports;
-      if (Array.isArray(airports) && airports.length >= 2) {
-        const route = formatRoute(airports[0], airports[1]);
-        if (route) return route;
-      }
-      if (Array.isArray(item.airport_route) && item.airport_route.length >= 2) {
-        const route = formatRoute(item.airport_route[0], item.airport_route[item.airport_route.length - 1]);
-        if (route) return route;
-      }
-      const route = formatRoute(item.origin || item.from, item.destination || item.to);
+      const route = formatAirportSequence(item.airport_codes || item.airportCodes) ||
+        formatAirportSequence(item._airports || item.airport_route || item.airports) ||
+        formatAirportSequence(item.route || item._route) ||
+        formatRoute(item.origin || item.from, item.destination || item.to);
       if (route) return route;
     }
     return "";
