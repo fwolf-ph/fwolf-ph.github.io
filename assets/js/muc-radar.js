@@ -1604,23 +1604,17 @@
     return "";
   }
 
-  function parseHexdbRoute(data) {
-    if (!data || typeof data.route !== "string") return "";
-    const airports = data.route.trim().toUpperCase().split("-");
-    return airports.length >= 2 ? formatRoute(airports[0], airports[airports.length - 1]) : "";
-  }
-
   async function fetchFlightRoute(aircraft) {
     const cleanCallsign = (aircraft.callsign || "").trim().toUpperCase();
     const registration = (aircraft.registration || "").trim().toUpperCase();
     const hex = (aircraft.icao24 || "").trim().toUpperCase();
     if (!cleanCallsign || cleanCallsign === "N/A" || cleanCallsign === "----" ||
         cleanCallsign === registration || cleanCallsign === hex) {
-      return "";
+      return null;
     }
     if (routeCache.has(cleanCallsign)) return routeCache.get(cleanCallsign);
 
-    let routeText = "";
+    let routeText = null;
     try {
       const response = await fetch("https://radar.fwolfph.workers.dev/route", {
         method: "POST",
@@ -1629,22 +1623,16 @@
           planes: [{ callsign: cleanCallsign, lat: aircraft.lat, lng: aircraft.lon }]
         })
       });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      routeText = parseWorkerRoute(await response.json());
+      const rawText = await response.text();
+      if (!response.ok || !rawText.trim()) return null;
+      try {
+        routeText = parseWorkerRoute(JSON.parse(rawText)) || null;
+      } catch (error) {
+        console.warn("[MUC-RADAR] Ungültige JSON-Antwort vom Worker für die Route:", error);
+        return null;
+      }
     } catch (error) {
       console.warn("[MUC-RADAR] Worker-Routenabfrage fehlgeschlagen:", error);
-    }
-
-    if (!routeText) {
-      try {
-        const response = await fetch(
-          `https://hexdb.io/api/v1/route/icao/${encodeURIComponent(cleanCallsign)}`
-        );
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        routeText = parseHexdbRoute(await response.json());
-      } catch (error) {
-        console.warn("[MUC-RADAR] HexDB-Routenabfrage fehlgeschlagen:", error);
-      }
     }
 
     if (routeText) routeCache.set(cleanCallsign, routeText);
@@ -1663,7 +1651,7 @@
     if (!cleanCallsign || cleanCallsign === "N/A" || cleanCallsign === "----" ||
         cleanCallsign === registration || cleanCallsign === hex) {
       currentRouteCallsign = null;
-      routeTextEl.textContent = "ROUTE NICHT VERFÜGBAR";
+      routeTextEl.textContent = "ROUTE: N/A";
       return;
     }
 
@@ -1681,7 +1669,7 @@
       routeTextEl.textContent = routeText;
       routeTextEl.classList.add("poke-route-found");
     } else {
-      routeTextEl.textContent = "ROUTE NICHT VERFÜGBAR";
+      routeTextEl.textContent = "ROUTE: N/A";
     }
   }
 
