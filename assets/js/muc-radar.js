@@ -32,9 +32,7 @@
   let hasDragged = false;
 
   let aircraftList = [];
-  let fetchTimer = null;
   let isFetching = false;
-  let rateLimitUntil = 0;
   let lastServerTimestamp = 0;
   let selectedAircraft = null;
   let hoveredAircraftIcao = null;
@@ -879,9 +877,7 @@
   // ==========================================
   // LIVE API (Dedicated Cloudflare Worker)
   // ==========================================
-  const LIVE_ENDPOINTS = [
-    "https://radar.fwolfph.workers.dev/"
-  ];
+  const RADAR_API_URL = "https://radar.fwolfph.workers.dev/";
 
   // Known ICAO Type Codes to Clean Names
   const ICAO_NAMES = {
@@ -916,65 +912,23 @@
     "DH8D": "DE HAVILLAND DASH 8-400"
   };
 
-  function scheduleNextFetch(delay) {
-    clearTimeout(fetchTimer);
-    fetchTimer = setTimeout(() => {
-      fetchTimer = null;
-      void fetchLiveAircraft();
-    }, delay);
-  }
-
   async function fetchLiveAircraft() {
-    if (Date.now() < rateLimitUntil) {
-      scheduleNextFetch(document.hidden ? 15000 : rateLimitUntil - Date.now());
-      return;
-    }
     if (isFetching) return;
-    clearTimeout(fetchTimer);
-    fetchTimer = null;
     isFetching = true;
 
-    console.info(`[MUC-RADAR] Starte Live-Abfrage: ${LIVE_ENDPOINTS[0]}`);
-    let rateLimited = false;
+    console.info(`[MUC-RADAR] Starte Live-Abfrage: ${RADAR_API_URL}`);
+    let timeoutId;
     try {
-      let data = null;
-      let lastEndpointError = null;
-      for (const endpoint of LIVE_ENDPOINTS) {
-        const controller = new AbortController();
-        const endpointTimeout = setTimeout(() => controller.abort(), 2500);
-        try {
-          // Keep requests header-free to avoid CORS preflight requests.
-          const resp = await fetch(endpoint, { signal: controller.signal });
-          if (resp.status === 429) {
-            rateLimited = true;
-            rateLimitUntil = Date.now() + 4000;
-            console.warn("[MUC-RADAR] HTTP 429: Live-Abfrage pausiert, vorhandene Radardaten bleiben erhalten.");
-            return;
-          }
-          if (!resp.ok) {
-            throw new Error(`HTTP ${resp.status} ${resp.statusText || ""}`.trim());
-          }
-
-          const responseData = await resp.json();
-          const hasAircraftArray = responseData &&
-            (Array.isArray(responseData.ac) || Array.isArray(responseData.aircraft));
-          if (!hasAircraftArray) {
-            throw new Error("Kein gültiges 'ac'- oder 'aircraft'-Array in der Antwort");
-          }
-          data = responseData;
-          break;
-        } catch (error) {
-          lastEndpointError = error;
-          console.warn(`[MUC-RADAR] Live-Endpunkt fehlgeschlagen (${endpoint}):`, error);
-        } finally {
-          clearTimeout(endpointTimeout);
-        }
+      const controller = new AbortController();
+      timeoutId = setTimeout(() => controller.abort(), 2500);
+      const resp = await fetch(RADAR_API_URL, { signal: controller.signal });
+      if (resp.status === 429) {
+        console.warn("[MUC-RADAR] HTTP 429: Live-Abfrage übersprungen; vorhandene Radardaten bleiben erhalten.");
+        return;
       }
+      if (!resp.ok) throw new Error(`HTTP ${resp.status} ${resp.statusText || ""}`.trim());
 
-      if (!data) {
-        throw lastEndpointError || new Error("Alle Live-Endpunkte sind nicht verfügbar");
-      }
-
+      const data = await resp.json();
       const serverTs = Number(data.now || data.ctime || 0);
       if (lastUpdateElem) {
         lastUpdateElem.textContent = new Date().toLocaleTimeString("de-DE", {
@@ -1005,7 +959,7 @@
         // Auch TXLU-Kennungen oder TWR-Fahrzeuge ignorieren falls Category fehlt
         const r = (ac.r || "").toUpperCase();
         const cs = (ac.flight || "").toUpperCase();
-        if (r === "TWR" || cs.startsWith("TXLU")) return false;
+        if (r.startsWith("TXLU") || cs.startsWith("TXLU") || r === "TWR" || cs === "TWR") return false;
         return true;
       });
 
@@ -1081,9 +1035,7 @@
             });
             updateCardContent(selectedAircraft);
           }
-        } catch (e) {
-          console.error("[MUC-RADAR] Pokémon-Karte konnte nicht aktualisiert werden:", e);
-        }
+        } catch (_) {}
       }
 
       drawRadar();
@@ -1099,10 +1051,8 @@
         `Worker-Abfrage fehlgeschlagen (${err.message}). Prüfe F12 Konsole auf Netzwerkfehler.`
       );
     } finally {
+      clearTimeout(timeoutId);
       isFetching = false;
-      scheduleNextFetch(rateLimited
-        ? (document.hidden ? 15000 : 4000)
-        : (document.hidden ? 15000 : 2000));
     }
   }
 
@@ -1921,14 +1871,7 @@
   }
 
   document.addEventListener("visibilitychange", () => {
-    clearTimeout(fetchTimer);
-    fetchTimer = null;
-    if (isFetching) return;
-    if (document.hidden) {
-      scheduleNextFetch(15000);
-    } else {
-      void fetchLiveAircraft();
-    }
+    if (!document.hidden) void fetchLiveAircraft();
   });
 
   window.addEventListener("keydown", (e) => {
@@ -1941,4 +1884,7 @@
   resizeCanvas();
   updateZoomButtons();
   void fetchLiveAircraft();
+  setInterval(() => {
+    if (!document.hidden) void fetchLiveAircraft();
+  }, 2000);
 })();
