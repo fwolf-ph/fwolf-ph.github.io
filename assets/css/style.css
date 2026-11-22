@@ -1085,6 +1085,23 @@
       outline-offset: 2px;
     }
 
+    .launcher-sidebar a:not(.sidebar-item) {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px 8px 18px;
+      border: 2px solid #000000;
+      background: #ffffff;
+      box-shadow: 3px 3px 0 #000000;
+      color: inherit;
+      text-decoration: none;
+      font-family: "Silkscreen", monospace;
+      font-size: 0.56rem;
+    }
+
+    .launcher-sidebar a:not(.sidebar-item).active,
+    .launcher-sidebar a:not(.sidebar-item):hover,
+    .launcher-sidebar a:not(.sidebar-item):focus-visible {
     .sidebar-group {
       display: flex;
       flex-direction: column;
@@ -1141,6 +1158,7 @@
       outline: 2px solid #000000;
       outline-offset: 2px;
     }
+
 
     .launcher-content-window {
       min-width: 0;
