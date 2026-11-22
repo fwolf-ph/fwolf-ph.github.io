@@ -32,8 +32,8 @@
   let hasDragged = false;
 
   let aircraftList = [];
-  let fetchTimer = null;
   let isFetching = false;
+  let lastServerTimestamp = 0;
   let selectedAircraft = null;
   let hoveredAircraftIcao = null;
 
@@ -914,36 +914,26 @@
 
   async function fetchLiveAircraft() {
     if (isFetching) return;
-    clearTimeout(fetchTimer);
-    fetchTimer = null;
     isFetching = true;
-    const reqStart = performance.now();
 
     console.info(`[MUC-RADAR] Starte Live-Abfrage via Cloudflare Worker: ${RADAR_API_URL}`);
     let timeoutId;
     try {
       const controller = new AbortController();
-      timeoutId = setTimeout(() => controller.abort(), 10000); // 10s Timeout
+      timeoutId = setTimeout(() => controller.abort(), 2500);
 
       // Ohne eigene Request-Header aufrufen, um jeden OPTIONS-Preflight zu verhindern
-      const resp = await fetch(RADAR_API_URL, {
+      const resp = await fetch(`${RADAR_API_URL}?_=${Date.now()}`, {
         cache: "no-store",
         signal: controller.signal
       });
-      clearTimeout(timeoutId);
 
       if (!resp.ok) {
         throw new Error(`HTTP ${resp.status} ${resp.statusText || ""}`.trim());
       }
 
       const data = await resp.json();
-      console.info("[MUC-RADAR] Antwort vom Worker empfangen:", data);
-
-      const acArray = data && (Array.isArray(data.ac) ? data.ac : (Array.isArray(data.aircraft) ? data.aircraft : null));
-      if (!Array.isArray(acArray)) {
-        throw new Error("Kein gültiges 'ac'-Array in Worker-Antwort");
-      }
-
+      const serverTs = Number(data.now || data.ctime || 0);
       if (lastUpdateElem) {
         lastUpdateElem.textContent = new Date().toLocaleTimeString("de-DE", {
           hour: "2-digit",
@@ -951,10 +941,23 @@
           second: "2-digit"
         });
       }
+      if (serverTs > 0 && serverTs < lastServerTimestamp) {
+        console.warn(`[MUC-RADAR] Veraltetes Datenpaket verworfen (${serverTs} < ${lastServerTimestamp}).`);
+        return;
+      }
+      if (serverTs > 0) lastServerTimestamp = serverTs;
+
+      console.info("[MUC-RADAR] Antwort vom Worker empfangen:", data);
+
+      const acArray = data && (Array.isArray(data.ac) ? data.ac : (Array.isArray(data.aircraft) ? data.aircraft : null));
+      if (!Array.isArray(acArray)) {
+        throw new Error("Kein gültiges 'ac'-Array in Worker-Antwort");
+      }
 
       // Filter: Bodenfahrzeuge (TXLU01 etc.) mit category === "C0" oder type === "adsb_icao_nt" herausfiltern
       const filteredAc = acArray.filter(ac => {
         if (!ac) return false;
+        if (Number(ac.seen_pos || 0) > 15) return false;
         if (ac.category === "C0") return false;
         if (ac.type === "adsb_icao_nt") return false;
         // Auch TXLU-Kennungen oder TWR-Fahrzeuge ignorieren falls Category fehlt
@@ -1056,12 +1059,6 @@
     } finally {
       clearTimeout(timeoutId);
       isFetching = false;
-      const elapsed = performance.now() - reqStart;
-      if (elapsed > 1000) {
-        console.warn(`[MUC-RADAR] Live-Abfrage dauerte ${Math.round(elapsed)} ms.`);
-      }
-      clearTimeout(fetchTimer);
-      fetchTimer = setTimeout(fetchLiveAircraft, document.hidden ? 15000 : 1000);
     }
   }
 
@@ -1880,15 +1877,7 @@
   }
 
   document.addEventListener("visibilitychange", () => {
-    clearTimeout(fetchTimer);
-    fetchTimer = null;
-    if (document.hidden) {
-      if (!isFetching) {
-        fetchTimer = setTimeout(fetchLiveAircraft, 15000);
-      }
-    } else if (!isFetching) {
-      void fetchLiveAircraft();
-    }
+    if (!document.hidden) void fetchLiveAircraft();
   });
 
   window.addEventListener("keydown", (e) => {
@@ -1901,4 +1890,7 @@
   resizeCanvas();
   updateZoomButtons();
   void fetchLiveAircraft();
+  setInterval(() => {
+    if (!document.hidden) void fetchLiveAircraft();
+  }, 1000);
 })();
