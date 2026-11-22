@@ -34,6 +34,7 @@
   let aircraftList = [];
   let fetchTimer = null;
   let isFetching = false;
+  let rateLimitUntil = 0;
   let lastServerTimestamp = 0;
   let selectedAircraft = null;
   let hoveredAircraftIcao = null;
@@ -922,6 +923,10 @@
   }
 
   async function fetchLiveAircraft() {
+    if (Date.now() < rateLimitUntil) {
+      scheduleNextFetch(document.hidden ? 15000 : rateLimitUntil - Date.now());
+      return;
+    }
     if (isFetching) return;
     clearTimeout(fetchTimer);
     fetchTimer = null;
@@ -941,6 +946,7 @@
 
       if (resp.status === 429) {
         rateLimited = true;
+        rateLimitUntil = Date.now() + 4000;
         console.warn("[MUC-RADAR] HTTP 429: Live-Abfrage pausiert, vorhandene Radardaten bleiben erhalten.");
         return;
       }
@@ -1076,7 +1082,9 @@
     } finally {
       clearTimeout(timeoutId);
       isFetching = false;
-      scheduleNextFetch(rateLimited ? 5000 : document.hidden ? 15000 : 2000);
+      scheduleNextFetch(rateLimited
+        ? (document.hidden ? 15000 : 4000)
+        : (document.hidden ? 15000 : 2000));
     }
   }
 
