@@ -985,6 +985,7 @@
           aircraftTypeCode: typeCode,
           aircraftDesc: derivedDesc,
           registration: ac.r || "----",
+          ownOp: ac.ownOp || "UNBEKANNT",
           operator: ac.ownOp || "UNBEKANNT",
           country: ac.ownOp || "UNBEKANNT"
         };
@@ -1018,7 +1019,7 @@
       if (liveCountElem) liveCountElem.textContent = `${aircraftList.length} FLIEGER`;
 
       // Update opened card if aircraft is selected
-      if (selectedAircraft) {
+      if (selectedAircraft && pokeModal && !pokeModal.hidden) {
         try {
           const updated = aircraftList.find(a => a.icao24 === selectedAircraft.icao24);
           if (updated) {
@@ -1056,8 +1057,11 @@
       clearTimeout(timeoutId);
       isFetching = false;
       const elapsed = performance.now() - reqStart;
-      const nextDelay = document.hidden ? 15000 : Math.max(100, 1000 - elapsed);
-      fetchTimer = setTimeout(fetchLiveAircraft, nextDelay);
+      if (elapsed > 1000) {
+        console.warn(`[MUC-RADAR] Live-Abfrage dauerte ${Math.round(elapsed)} ms.`);
+      }
+      clearTimeout(fetchTimer);
+      fetchTimer = setTimeout(fetchLiveAircraft, document.hidden ? 15000 : 1000);
     }
   }
 
@@ -1289,23 +1293,66 @@
 
   // Special Livery Registry (Known registrations)
   const SPECIAL_LIVERIES = {
-    "D-AIDV": "RETRO LIVERY (LUFTHANSA)",
-    "D-ABYT": "RETRO LIVERY (LUFTHANSA)",
+    "D-ANRA": "CONDOR STRIPES LIVERY",
+    "D-ANRB": "CONDOR STRIPES LIVERY",
+    "D-ANRC": "CONDOR STRIPES LIVERY",
+    "D-ANRD": "CONDOR STRIPES LIVERY",
+    "D-ANRE": "CONDOR STRIPES LIVERY",
+    "D-AICA": "CONDOR RETRO \"HANS\"",
+    "D-ABYT": "LUFTHANSA RETRO LIVERY",
+    "D-AIDV": "LUFTHANSA RETRO LIVERY",
     "D-AIKQ": "FANHANSA",
-    "D-AIUA": "STAR ALLIANCE",
-    "D-AIZM": "STAR ALLIANCE",
-    "D-AIBM": "STAR ALLIANCE",
-    "D-AIMC": "STAR ALLIANCE",
     "D-AIEQ": "LOVEHANSA",
-    "A7-BAA": "ONEWORLD / FIFA",
+    "D-AIYQ": "LUFTHANSA 100 YEARS ANNIVERSARY LIVERY",
+    "D-AIXL": "FC BAYERN SPECIAL LIVERY",
+    "D-AIXM": "FC BAYERN SPECIAL LIVERY",
+    "D-AIUA": "STAR ALLIANCE LIVERY",
+    "D-AIZM": "STAR ALLIANCE LIVERY",
+    "D-AIBM": "STAR ALLIANCE LIVERY",
+    "D-AIMC": "STAR ALLIANCE LIVERY",
+    "D-AIHV": "STAR ALLIANCE LIVERY",
+    "D-AIHW": "STAR ALLIANCE LIVERY",
+    "OE-LBM": "STAR ALLIANCE LIVERY",
+    "OE-LBX": "STAR ALLIANCE LIVERY",
+    "HB-JCA": "STAR ALLIANCE LIVERY",
+    "HB-JHG": "STAR ALLIANCE LIVERY",
+    "TC-JRL": "STAR ALLIANCE LIVERY",
+    "C-GHLM": "STAR ALLIANCE LIVERY",
+    "N76021": "STAR ALLIANCE LIVERY",
+    "N653UA": "STAR ALLIANCE LIVERY",
+    "JA712A": "STAR ALLIANCE LIVERY",
+    "HB-JHM": "SWISS WANDERLUST / PEOPLE LIVERY",
+    "HB-JNA": "SWISS WANDERLUST / PEOPLE LIVERY",
+    "OE-LZD": "AUSTRIAN MY SOUND / JOHANN STRAUSS LIVERY",
+    "D-AEWM": "EUROWINGS BVB MANNSCHAFTSAIRBUS",
+    "D-AIZS": "EUROWINGS EUROPA-PARK LIVERY",
+    "D-ABHC": "EUROWINGS HOLIDAYS LIVERY",
+    "D-ATUJ": "TUIFLY TROPIFRUTTI",
+    "D-ATUZ": "TUIFLY RIU LIVERY",
+    "D-ABMQ": "TUIFLY MAGIC LIFE LIVERY",
+    "A7-BAA": "QATAR AIRWAYS ONEWORLD LIVERY",
+    "A7-ALZ": "QATAR AIRWAYS SPECIAL LIVERY",
+    "A7-BEX": "QATAR AIRWAYS SPECIAL LIVERY",
+    "A6-EEU": "EMIRATES EXPO LIVERY",
+    "A6-EOA": "EMIRATES SPECIAL LIVERY",
+    "A6-EOT": "EMIRATES SPECIAL LIVERY",
+    "A6-EVS": "EMIRATES SPECIAL LIVERY",
     "JA381A": "FLYING HONU (BLUE)",
     "JA382A": "FLYING HONU (EMERALD)",
     "JA383A": "FLYING HONU (ORANGE)",
-    "A6-EEU": "EMIRATES EXPO",
-    "A6-EOT": "EMIRATES SPECIAL",
-    "A6-EOA": "EMIRATES SPECIAL",
-    "TC-LNA": "TURKISH UEFA CHAMPIONS LEAGUE",
-    "TC-JRG": "TURKISH RETRO"
+    "JA873A": "ANA R2-D2 STAR WARS LIVERY",
+    "A6-BND": "ETIHAD MANCHESTER CITY LIVERY",
+    "A6-BLM": "ETIHAD GREENLINER",
+    "A6-BLV": "ETIHAD CHOOSE THE USA LIVERY",
+    "TC-LNA": "TURKISH AIRLINES UEFA CHAMPIONS LEAGUE",
+    "TC-JRG": "TURKISH AIRLINES RETRO LIVERY",
+    "TC-JJN": "TURKISH AIRLINES 300TH AIRCRAFT LIVERY",
+    "G-EUPJ": "BRITISH AIRWAYS BEA RETRO LIVERY",
+    "G-BNLY": "BRITISH AIRWAYS LANDOR RETRO LIVERY",
+    "PH-BVA": "KLM ORANGE PRIDE LIVERY",
+    "PH-KZU": "KLM SKYTEAM LIVERY",
+    "F-GZNT": "AIR FRANCE SKYTEAM LIVERY",
+    "EC-MUD": "IBERIA ONEWORLD LIVERY"
   };
 
   function detectKnownSpecialLivery(reg) {
@@ -1315,11 +1362,75 @@
     const noDash = cleanReg.replace(/-/g, "");
     if (SPECIAL_LIVERIES[noDash]) return SPECIAL_LIVERIES[noDash];
 
-    // Condor Beach-Stripes (D-ANRA to D-ANRZ)
-    if (cleanReg.startsWith("D-ANR") || (noDash.length === 5 && noDash.startsWith("DANR"))) {
-      return "CONDOR BEACH-STRIPES";
+    if (/^D-ANR[A-Z]$/.test(cleanReg) || /^DANR[A-Z]$/.test(noDash) ||
+        /^D-ANC[A-Z]$/.test(cleanReg) || /^DANC[A-Z]$/.test(noDash) ||
+        /^D-ANM[A-Z]$/.test(cleanReg) || /^DANM[A-Z]$/.test(noDash)) {
+      return "CONDOR STRIPES LIVERY";
     }
     return null;
+  }
+
+  const ICAO_AIRLINES = {
+    DLH: "LUFTHANSA",
+    LHX: "LUFTHANSA CITY",
+    CLH: "LUFTHANSA CITYLINE",
+    EWG: "EUROWINGS",
+    OCN: "DISCOVER AIRLINES",
+    CFG: "CONDOR",
+    TUI: "TUIFLY",
+    AUA: "AUSTRIAN AIRLINES",
+    SWR: "SWISS",
+    BAW: "BRITISH AIRWAYS",
+    AFR: "AIR FRANCE",
+    KLM: "KLM",
+    IBE: "IBERIA",
+    TAP: "TAP AIR PORTUGAL",
+    AZA: "ITA AIRWAYS",
+    SAS: "SAS",
+    FIN: "FINNAIR",
+    LOT: "LOT POLISH AIRLINES",
+    THY: "TURKISH AIRLINES",
+    QTR: "QATAR AIRWAYS",
+    UAE: "EMIRATES",
+    ETD: "ETIHAD AIRWAYS",
+    UAL: "UNITED AIRLINES",
+    DAL: "DELTA AIR LINES",
+    AAL: "AMERICAN AIRLINES",
+    ACA: "AIR CANADA",
+    ANA: "ALL NIPPON AIRWAYS",
+    SIA: "SINGAPORE AIRLINES",
+    CPA: "CATHAY PACIFIC",
+    RYR: "RYANAIR",
+    EZY: "EASYJET",
+    WZZ: "WIZZ AIR",
+    VLG: "VUELING",
+    PGT: "PEGASUS AIRLINES",
+    SXS: "SUNEXPRESS",
+    ELY: "EL AL",
+    EIN: "AER LINGUS",
+    ICE: "ICELANDAIR",
+    BTI: "AIR BALTIC",
+    CRO: "CROATIA AIRLINES",
+    AEE: "AEGEAN AIRLINES",
+    MSR: "EGYPTAIR",
+    RAM: "ROYAL AIR MAROC"
+  };
+
+  function resolveAirlineName(ac, hexData) {
+    const ownOperator = String(ac.ownOp || "").trim();
+    if (ownOperator && ownOperator.toUpperCase() !== "UNBEKANNT") return ownOperator;
+
+    const registeredOwners = String((hexData && hexData.RegisteredOwners) || "").trim();
+    if (registeredOwners && !["UNBEKANNT", "UNKNOWN"].includes(registeredOwners.toUpperCase())) {
+      return registeredOwners;
+    }
+
+    const callsign = String(ac.callsign || "").trim().toUpperCase();
+    const callsignPrefix = callsign.slice(0, 3);
+    if (/^[A-Z]{3}[A-Z0-9]/.test(callsign)) {
+      return ICAO_AIRLINES[callsignPrefix] || "UNBEKANNT";
+    }
+    return "UNBEKANNT";
   }
 
   function getPixelArtSvg(catId) {
@@ -1603,22 +1714,33 @@
         const cleanReg = reg.replace(/-/g, "");
         const controller = new AbortController();
         const tid = setTimeout(() => controller.abort(), 4000);
-        const resp = await fetch(`https://api.planespotters.net/pub/photos/reg/${cleanReg}`, {
-          signal: controller.signal
-        });
-        clearTimeout(tid);
-
-        if (resp.ok) {
-          const pData = await resp.json();
-          if (pData && Array.isArray(pData.photos) && pData.photos.length > 0) {
-            const link = (pData.photos[0].link || "").toLowerCase();
-            const photographer = (pData.photos[0].photographer || "").toLowerCase();
-            if (link.includes("retro") || link.includes("special") || link.includes("livery") || link.includes("fanhansa") || link.includes("alliance")) {
-              applyLivery("SPECIAL LIVERY");
+        try {
+          const resp = await fetch(`https://api.planespotters.net/pub/photos/reg/${cleanReg}`, {
+            signal: controller.signal
+          });
+          if (resp.ok) {
+            const pData = await resp.json();
+            if (pData && Array.isArray(pData.photos)) {
+              const photoMetadata = pData.photos
+                .filter(photo => photo && typeof photo === "object")
+                .flatMap(photo => Object.values(photo).filter(value => typeof value === "string"))
+                .join(" ")
+                .toLowerCase();
+              const specialKeywords = [
+                "retro", "special", "livery", "stripes", "fanhansa", "alliance",
+                "oneworld", "skyteam", "honu", "expo", "disney", "star wars"
+              ];
+              if (specialKeywords.some(keyword => photoMetadata.includes(keyword))) {
+                applyLivery("SPECIAL LIVERY");
+              }
             }
           }
+        } finally {
+          clearTimeout(tid);
         }
-      } catch (_) {}
+      } catch (error) {
+        console.warn("[MUC-RADAR] Planespotters-Abfrage für Sonderlackierung fehlgeschlagen:", error);
+      }
     }
 
     function applyLivery(name) {
@@ -1671,7 +1793,7 @@
       ? ac.aircraftDesc 
       : (ICAO_NAMES[typeCode] || (hex.Type ? `${hex.Manufacturer || ""} ${hex.Type}`.trim() : (typeCode ? `TYP ${typeCode}` : "UNBEKANNTER TYP")));
     const reg = ac.registration && ac.registration !== "----" ? ac.registration : (hex.Registration || "");
-    const operator = ac.operator && ac.operator !== "UNBEKANNT" ? ac.operator : (hex.RegisteredOwners || ac.country || "Unbekannt");
+    const operator = resolveAirlineName(ac, hex);
 
     const cat = categorizeAircraft(typeCode, fullType, ac.callsign);
 
