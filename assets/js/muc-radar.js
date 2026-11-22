@@ -879,7 +879,11 @@
   // ==========================================
   // LIVE API (Dedicated Cloudflare Worker)
   // ==========================================
-  const RADAR_API_URL = "https://radar.fwolfph.workers.dev/";
+  const LIVE_ENDPOINTS = [
+    "https://radar.fwolfph.workers.dev/",
+    "https://api.adsb.lol/v2/lat/48.3538/lon/11.7861/dist/50",
+    "https://api.airplanes.live/v2/point/48.3538/11.7861/50"
+  ];
 
   // Known ICAO Type Codes to Clean Names
   const ICAO_NAMES = {
@@ -932,30 +936,47 @@
     fetchTimer = null;
     isFetching = true;
 
-    console.info(`[MUC-RADAR] Starte Live-Abfrage via Cloudflare Worker: ${RADAR_API_URL}`);
-    let timeoutId;
+    console.info(`[MUC-RADAR] Starte Live-Abfrage: ${LIVE_ENDPOINTS[0]}`);
     let rateLimited = false;
     try {
-      const controller = new AbortController();
-      timeoutId = setTimeout(() => controller.abort(), 2500);
+      let data = null;
+      let lastEndpointError = null;
+      for (const endpoint of LIVE_ENDPOINTS) {
+        const controller = new AbortController();
+        const endpointTimeout = setTimeout(() => controller.abort(), 2500);
+        try {
+          // Keep requests header-free to avoid CORS preflight requests.
+          const resp = await fetch(endpoint, { signal: controller.signal });
+          if (resp.status === 429) {
+            rateLimited = true;
+            rateLimitUntil = Date.now() + 4000;
+            console.warn("[MUC-RADAR] HTTP 429: Live-Abfrage pausiert, vorhandene Radardaten bleiben erhalten.");
+            return;
+          }
+          if (!resp.ok) {
+            throw new Error(`HTTP ${resp.status} ${resp.statusText || ""}`.trim());
+          }
 
-      // Ohne eigene Request-Header aufrufen, um jeden OPTIONS-Preflight zu verhindern
-      const resp = await fetch(RADAR_API_URL, {
-        signal: controller.signal
-      });
-
-      if (resp.status === 429) {
-        rateLimited = true;
-        rateLimitUntil = Date.now() + 4000;
-        console.warn("[MUC-RADAR] HTTP 429: Live-Abfrage pausiert, vorhandene Radardaten bleiben erhalten.");
-        return;
+          const responseData = await resp.json();
+          const hasAircraftArray = responseData &&
+            (Array.isArray(responseData.ac) || Array.isArray(responseData.aircraft));
+          if (!hasAircraftArray) {
+            throw new Error("Kein gültiges 'ac'- oder 'aircraft'-Array in der Antwort");
+          }
+          data = responseData;
+          break;
+        } catch (error) {
+          lastEndpointError = error;
+          console.warn(`[MUC-RADAR] Live-Endpunkt fehlgeschlagen (${endpoint}):`, error);
+        } finally {
+          clearTimeout(endpointTimeout);
+        }
       }
 
-      if (!resp.ok) {
-        throw new Error(`HTTP ${resp.status} ${resp.statusText || ""}`.trim());
+      if (!data) {
+        throw lastEndpointError || new Error("Alle Live-Endpunkte sind nicht verfügbar");
       }
 
-      const data = await resp.json();
       const serverTs = Number(data.now || data.ctime || 0);
       if (lastUpdateElem) {
         lastUpdateElem.textContent = new Date().toLocaleTimeString("de-DE", {
@@ -1080,7 +1101,6 @@
         `Worker-Abfrage fehlgeschlagen (${err.message}). Prüfe F12 Konsole auf Netzwerkfehler.`
       );
     } finally {
-      clearTimeout(timeoutId);
       isFetching = false;
       scheduleNextFetch(rateLimited
         ? (document.hidden ? 15000 : 4000)
