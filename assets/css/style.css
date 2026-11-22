@@ -1747,6 +1747,10 @@
       font-size: 0.8rem;
     }
 
+    .poke-route-found {
+      font-weight: 700;
+    }
+
     .poke-header {
       display: flex;
       align-items: center;

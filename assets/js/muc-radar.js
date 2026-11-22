@@ -34,6 +34,7 @@
   let aircraftList = [];
   let fetchTimer = null;
   let isFetching = false;
+  let lastFetchStartedAt = -Infinity;
   let selectedAircraft = null;
 
   // Elements
@@ -537,6 +538,48 @@
     ctx.restore();
   }
 
+  function getAircraftPosition(ac, now) {
+    const elapsedSeconds = Math.min(Math.max((now - ac.lastUpdateTs) / 1000, 0), 2.5);
+    const distanceMeters = Number.isFinite(ac.velocity) && ac.velocity > 1
+      ? ac.velocity * 0.514444 * elapsedSeconds
+      : 0;
+    const headingRadians = ac.heading * Math.PI / 180;
+    const latitudeRadians = ac.lat * Math.PI / 180;
+    const latitude = ac.lat + (distanceMeters * Math.cos(headingRadians)) / 111320;
+    const longitude = ac.lon + (distanceMeters * Math.sin(headingRadians)) /
+      (111320 * Math.cos(latitudeRadians));
+
+    if (ac.blendStartTs == null) return { lat: latitude, lon: longitude };
+
+    const blend = Math.min(Math.max((now - ac.blendStartTs) / 250, 0), 1);
+    if (blend === 1) {
+      ac.blendStartTs = null;
+      ac.blendFromLat = null;
+      ac.blendFromLon = null;
+      return { lat: latitude, lon: longitude };
+    }
+
+    return {
+      lat: ac.blendFromLat + (latitude - ac.blendFromLat) * blend,
+      lon: ac.blendFromLon + (longitude - ac.blendFromLon) * blend
+    };
+  }
+
+  function getFetchInterval() {
+    return document.hidden ? 15000 : 1000;
+  }
+
+  function scheduleNextFetch(immediate = false) {
+    clearTimeout(fetchTimer);
+    const elapsed = performance.now() - lastFetchStartedAt;
+    const interval = immediate ? 1000 : getFetchInterval();
+    const delay = Math.max(interval - elapsed, 0);
+    fetchTimer = setTimeout(() => {
+      fetchTimer = null;
+      void fetchLiveAircraft();
+    }, delay);
+  }
+
   // Main Radar Canvas Rendering
   function drawRadar() {
     const dpr = window.devicePixelRatio || 1;
@@ -724,12 +767,34 @@
     ctx.fillText("TOWER", twrPos.x + 8 * dpr, twrPos.y + 3 * dpr);
 
     // 9. Aircraft Rendering (with exact ground & flight positioning)
+    const now = performance.now();
     aircraftList.forEach(ac => {
       if (ac.lat == null || ac.lon == null) return;
-      const pos = geoToCanvas(ac.lat, ac.lon);
+      const aircraftPosition = getAircraftPosition(ac, now);
+      const pos = geoToCanvas(aircraftPosition.lat, aircraftPosition.lon);
 
       ac._screenX = pos.rawX;
       ac._screenY = pos.rawY;
+
+      if (selectedAircraft && selectedAircraft.icao24 === ac.icao24 && pokeModal && !pokeModal.hidden) {
+        const headingRad = (Number.isFinite(ac.heading) ? ac.heading : 0) * Math.PI / 180;
+        const vectorDistanceMeters = 8000;
+        const latitudeRad = aircraftPosition.lat * Math.PI / 180;
+        const vectorEnd = geoToCanvas(
+          aircraftPosition.lat + (vectorDistanceMeters * Math.cos(headingRad)) / 111320,
+          aircraftPosition.lon + (vectorDistanceMeters * Math.sin(headingRad)) /
+            (111320 * Math.cos(latitudeRad))
+        );
+        ctx.save();
+        ctx.strokeStyle = "#000000";
+        ctx.lineWidth = 1 * dpr;
+        ctx.setLineDash([4 * dpr, 3 * dpr]);
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+        ctx.lineTo(vectorEnd.x, vectorEnd.y);
+        ctx.stroke();
+        ctx.restore();
+      }
 
       ctx.save();
       ctx.translate(pos.x, pos.y);
@@ -889,11 +954,13 @@
   async function fetchLiveAircraft() {
     if (isFetching) return;
     isFetching = true;
+    lastFetchStartedAt = performance.now();
 
     console.info(`[MUC-RADAR] Starte Live-Abfrage via Cloudflare Worker: ${RADAR_API_URL}`);
+    let timeoutId;
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s Timeout
+      timeoutId = setTimeout(() => controller.abort(), 10000); // 10s Timeout
 
       // Ohne eigene Request-Header aufrufen, um jeden OPTIONS-Preflight zu verhindern
       const resp = await fetch(RADAR_API_URL, {
@@ -913,6 +980,9 @@
         throw new Error("Kein gültiges 'ac'-Array in Worker-Antwort");
       }
 
+      const updatedAt = performance.now();
+      const previousAircraft = new Map(aircraftList.map(ac => [ac.icao24, ac]));
+
       // Filter: Bodenfahrzeuge (TXLU01 etc.) mit category === "C0" oder type === "adsb_icao_nt" herausfiltern
       const filteredAc = acArray.filter(ac => {
         if (!ac) return false;
@@ -931,7 +1001,7 @@
         const typeCode = (ac.t || "").toUpperCase();
         const derivedDesc = ac.desc || ICAO_NAMES[typeCode] || (typeCode ? `TYP ${typeCode}` : "UNBEKANNTER TYP");
 
-        return {
+        const aircraft = {
           icao24: String(ac.hex || "").trim().toLowerCase(),
           callsign: (ac.flight || ac.r || ac.hex || "N/A").trim(),
           lat: Number(ac.lat),
@@ -939,8 +1009,8 @@
           altitude: altitude, // in ft
           baroAltitude: altitude / 3.28084, // in m
           onGround: onGround,
-          velocity: Math.round(Number(ac.gs || 0)), // in kt
-          heading: Math.round(Number(ac.track || ac.true_heading || 0)),
+          velocity: Number(ac.gs || 0), // in kt
+          heading: Number(ac.track ?? ac.true_heading ?? 0),
           verticalRate: Math.round(Number(ac.baro_rate || ac.geom_rate || 0)), // in ft/min
           squawk: ac.squawk || "----",
           aircraftTypeCode: typeCode,
@@ -949,6 +1019,17 @@
           operator: ac.ownOp || "UNBEKANNT",
           country: ac.ownOp || "UNBEKANNT"
         };
+        if (!Number.isFinite(aircraft.velocity)) aircraft.velocity = 0;
+        if (!Number.isFinite(aircraft.heading)) aircraft.heading = 0;
+        const previous = previousAircraft.get(aircraft.icao24);
+        const previousPosition = previous
+          ? getAircraftPosition(previous, updatedAt)
+          : { lat: aircraft.lat, lon: aircraft.lon };
+        aircraft.lastUpdateTs = updatedAt;
+        aircraft.blendFromLat = previousPosition.lat;
+        aircraft.blendFromLon = previousPosition.lon;
+        aircraft.blendStartTs = previous ? updatedAt : null;
+        return aircraft;
       }).filter(a => !isNaN(a.lat) && !isNaN(a.lon));
 
       console.info(`[MUC-RADAR] ${rawAircraft.length} echte Flugzeuge erfolgreich gemappt (Bodenfahrzeuge gefiltert).`);
@@ -961,7 +1042,6 @@
           "INFO // AKTUELL KEINE FLUGZEUGE IM RADARBEREICH",
           "Im Moment senden keine echten Flugzeuge im Umkreis von EDDM / München ADS-B Signale."
         );
-        isFetching = false;
         return;
       }
 
@@ -994,7 +1074,9 @@
         `Worker-Abfrage fehlgeschlagen (${err.message}). Prüfe F12 Konsole auf Netzwerkfehler.`
       );
     } finally {
+      clearTimeout(timeoutId);
       isFetching = false;
+      scheduleNextFetch();
     }
   }
 
@@ -1359,79 +1441,143 @@
     }
   }
 
+  const ROUTE_IATA_BY_ICAO = {
+    EDDM: "MUC", EDDF: "FRA", EDDB: "BER", EDDH: "HAM", EDDL: "DUS",
+    EDDK: "CGN", EDDS: "STR", LOWW: "VIE", LSZH: "ZRH", EGLL: "LHR",
+    LFPG: "CDG", EHAM: "AMS", LEMD: "MAD", LIRF: "FCO", OTHH: "DOH",
+    OMDB: "DXB", KJFK: "JFK", CYYZ: "YYZ"
+  };
+  const ROUTE_ICAO_BY_IATA = Object.fromEntries(
+    Object.entries(ROUTE_IATA_BY_ICAO).map(([icao, iata]) => [iata, icao])
+  );
+  const routeCache = new Map();
   let currentRouteCallsign = null;
 
-  async function fetchAndDisplayRoute(ac) {
+  function formatAirport(airport) {
+    let iata = "";
+    let icao = "";
+    let code = "";
+
+    if (typeof airport === "string" || typeof airport === "number") {
+      code = String(airport).trim().toUpperCase();
+    } else if (airport && typeof airport === "object") {
+      iata = String(airport.iata || airport.iata_code || airport.iataCode || airport.IATA || "").trim().toUpperCase();
+      icao = String(airport.icao || airport.icao_code || airport.icaoCode || airport.ICAO || "").trim().toUpperCase();
+      code = String(airport.code || airport.ident || "").trim().toUpperCase();
+    }
+
+    if (!icao && /^[A-Z]{4}$/.test(code)) icao = code;
+    if (!iata && /^[A-Z]{3}$/.test(code)) iata = code;
+    if (!iata && icao) iata = ROUTE_IATA_BY_ICAO[icao] || "";
+    if (!icao && iata) icao = ROUTE_ICAO_BY_IATA[iata] || "";
+
+    if (iata && icao) return `${iata} (${icao})`;
+    return iata || icao || code;
+  }
+
+  function formatRoute(origin, destination) {
+    const from = formatAirport(origin);
+    const to = formatAirport(destination);
+    return from && to ? `${from} ✈ ${to}` : "";
+  }
+
+  function parseWorkerRoute(data) {
+    const items = Array.isArray(data) ? data : [data];
+    for (const item of items) {
+      if (!item || typeof item !== "object") continue;
+      const airports = item._airports || data._airports;
+      if (Array.isArray(airports) && airports.length >= 2) {
+        const route = formatRoute(airports[0], airports[1]);
+        if (route) return route;
+      }
+      if (Array.isArray(item.airport_route) && item.airport_route.length >= 2) {
+        const route = formatRoute(item.airport_route[0], item.airport_route[item.airport_route.length - 1]);
+        if (route) return route;
+      }
+      const route = formatRoute(item.origin || item.from, item.destination || item.to);
+      if (route) return route;
+    }
+    return "";
+  }
+
+  function parseHexdbRoute(data) {
+    if (!data || typeof data.route !== "string") return "";
+    const airports = data.route.trim().toUpperCase().split("-");
+    return airports.length >= 2 ? formatRoute(airports[0], airports[airports.length - 1]) : "";
+  }
+
+  async function fetchFlightRoute(aircraft) {
+    const cleanCallsign = (aircraft.callsign || "").trim().toUpperCase();
+    const registration = (aircraft.registration || "").trim().toUpperCase();
+    const hex = (aircraft.icao24 || "").trim().toUpperCase();
+    if (!cleanCallsign || cleanCallsign === "N/A" || cleanCallsign === "----" ||
+        cleanCallsign === registration || cleanCallsign === hex) {
+      return "";
+    }
+    if (routeCache.has(cleanCallsign)) return routeCache.get(cleanCallsign);
+
+    let routeText = "";
+    try {
+      const response = await fetch("https://radar.fwolfph.workers.dev/route", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          planes: [{ callsign: cleanCallsign, lat: aircraft.lat, lng: aircraft.lon }]
+        })
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      routeText = parseWorkerRoute(await response.json());
+    } catch (error) {
+      console.warn("[MUC-RADAR] Worker-Routenabfrage fehlgeschlagen:", error);
+    }
+
+    if (!routeText) {
+      try {
+        const response = await fetch(
+          `https://hexdb.io/api/v1/route/icao/${encodeURIComponent(cleanCallsign)}`
+        );
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        routeText = parseHexdbRoute(await response.json());
+      } catch (error) {
+        console.warn("[MUC-RADAR] HexDB-Routenabfrage fehlgeschlagen:", error);
+      }
+    }
+
+    if (routeText) routeCache.set(cleanCallsign, routeText);
+    return routeText;
+  }
+
+  async function fetchAndDisplayRoute(aircraft) {
     const routeTextEl = document.getElementById("poke-route-text");
     if (!routeTextEl) return;
 
-    const callsign = (ac.callsign || "").trim();
-    if (!callsign || callsign === "N/A") {
+    const cleanCallsign = (aircraft.callsign || "").trim().toUpperCase();
+    currentRouteCallsign = cleanCallsign;
+    routeTextEl.classList.remove("poke-route-found");
+    const registration = (aircraft.registration || "").trim().toUpperCase();
+    const hex = (aircraft.icao24 || "").trim().toUpperCase();
+    if (!cleanCallsign || cleanCallsign === "N/A" || cleanCallsign === "----" ||
+        cleanCallsign === registration || cleanCallsign === hex) {
+      currentRouteCallsign = null;
       routeTextEl.textContent = "ROUTE NICHT VERFÜGBAR";
       return;
     }
 
-    currentRouteCallsign = callsign;
+    const cachedRoute = routeCache.get(cleanCallsign);
+    if (cachedRoute) {
+      routeTextEl.textContent = cachedRoute;
+      routeTextEl.classList.add("poke-route-found");
+      return;
+    }
+
     routeTextEl.textContent = "ROUTE WIRD ERMITTELT...";
-
-    try {
-      const resp = await fetch("https://radar.fwolfph.workers.dev/route", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          planes: [
-            {
-              callsign: callsign,
-              lat: ac.lat || 48.3538,
-              lng: ac.lon || 11.7861
-            }
-          ]
-        })
-      });
-
-      if (currentRouteCallsign !== callsign) return; // Aircraft switched meanwhile
-
-      if (!resp.ok) {
-        throw new Error(`HTTP ${resp.status}`);
-      }
-
-      const text = await resp.text();
-      let parsed = null;
-      if (text && text.trim().length > 0) {
-        try {
-          parsed = JSON.parse(text);
-        } catch (_) {}
-      }
-
-      let routeStr = "";
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        const item = parsed[0];
-        if (item.airport_route && Array.isArray(item.airport_route) && item.airport_route.length >= 2) {
-          routeStr = `${item.airport_route[0]} ✈ ${item.airport_route[item.airport_route.length - 1]}`;
-        } else if (item.origin && item.destination) {
-          routeStr = `${item.origin} ✈ ${item.destination}`;
-        } else if (item.from && item.to) {
-          routeStr = `${item.from} ✈ ${item.to}`;
-        } else if (item.route) {
-          routeStr = String(item.route);
-        }
-      } else if (parsed && typeof parsed === "object") {
-        if (parsed.origin && parsed.destination) {
-          routeStr = `${parsed.origin} ✈ ${parsed.destination}`;
-        } else if (parsed.route) {
-          routeStr = String(parsed.route);
-        }
-      }
-
-      if (routeStr) {
-        routeTextEl.textContent = routeStr.toUpperCase();
-      } else {
-        routeTextEl.textContent = "ROUTE NICHT VERFÜGBAR";
-      }
-    } catch (_) {
-      if (currentRouteCallsign === callsign) {
-        routeTextEl.textContent = "ROUTE NICHT VERFÜGBAR";
-      }
+    const routeText = await fetchFlightRoute(aircraft);
+    if (currentRouteCallsign !== cleanCallsign) return;
+    if (routeText) {
+      routeTextEl.textContent = routeText;
+      routeTextEl.classList.add("poke-route-found");
+    } else {
+      routeTextEl.textContent = "ROUTE NICHT VERFÜGBAR";
     }
   }
 
@@ -1596,6 +1742,7 @@
   function closePokemonCard() {
     if (pokeModal) pokeModal.hidden = true;
     selectedAircraft = null;
+    currentRouteCallsign = null;
     drawRadar();
   }
 
@@ -1606,6 +1753,10 @@
     });
   }
 
+  document.addEventListener("visibilitychange", () => {
+    scheduleNextFetch(!document.hidden);
+  });
+
   window.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && pokeModal && !pokeModal.hidden) {
       closePokemonCard();
@@ -1615,6 +1766,10 @@
   // Initial startup
   resizeCanvas();
   updateZoomButtons();
-  fetchLiveAircraft();
-  fetchTimer = setInterval(fetchLiveAircraft, 15000); // 15s refresh interval
+  void fetchLiveAircraft();
+  function animateRadar() {
+    drawRadar();
+    requestAnimationFrame(animateRadar);
+  }
+  requestAnimationFrame(animateRadar);
 })();
