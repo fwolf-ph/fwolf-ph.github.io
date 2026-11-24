@@ -3,18 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#111827">
-  <title>fwolf-ph</title>
+  <meta name="theme-color" content="#ffffff">
+  <title>fwolf-ph // Changelog</title>
   <link rel="stylesheet" href="assets/css/style.css">
   <script defer src="assets/js/system.js"></script>
 </head>
 <body class="bit-mode">
   <header id="system-bar" class="system-bar">
-    <strong class="system-label">SYS // FWOLF-PH</strong>
+    <strong class="system-label"><a href="index.html">SYS // FWOLF-PH</a></strong>
     <div class="system-meta">
       <time id="system-time" aria-label="Uhrzeit">--:--:--</time>
       <time id="system-date" aria-label="Datum">----</time>
-      <button id="theme-btn" class="system-theme-button" type="button" data-theme-toggle aria-label="Farbschema invertieren">Dark 1-Bit: Weiß auf Schwarz</button>
     </div>
   </header>
 
@@ -41,17 +40,17 @@
         <nav class="launcher-sidebar launcher-window" aria-label="Launcher-Menü">
           <div class="launcher-sidebar-title">NAVIGATION</div>
           <div class="sidebar-group">
-            <a class="sidebar-item active" id="nav-projects-toggle" href="index.html" aria-expanded="true" aria-current="page">
+            <a class="sidebar-item" id="nav-projects-toggle" href="projekte.html" aria-expanded="false">
               <svg viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path fill="currentColor" d="M1 1h6v6H1zm8 0h6v6H9zM1 9h6v6H1zm8 0h6v6H9z"/></svg>
               <span>PROJEKTE</span>
             </a>
-            <div class="sidebar-subnav" id="projects-subnav">
-              <a class="sidebar-subitem" href="index.html?category=tum" data-project-sub="tum">
+            <div class="sidebar-subnav" id="projects-subnav" hidden>
+              <a class="sidebar-subitem" href="projekte.html?category=tum" data-project-sub="tum">
                 <span class="sidebar-subitem-branch" aria-hidden="true">├─</span>
                 <svg viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path fill="currentColor" d="M1 2h14v3h-2v9h-3V5H6v9H3V5H1z"/></svg>
                 <span>Physik TUM</span>
               </a>
-              <a class="sidebar-subitem" href="index.html?category=sonstiges" data-project-sub="sonstiges">
+              <a class="sidebar-subitem" href="projekte.html?category=sonstiges" data-project-sub="sonstiges">
                 <span class="sidebar-subitem-branch" aria-hidden="true">└─</span>
                 <svg viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path fill="currentColor" d="M2 2h4v4H2zm8 0h4v4h-4zM2 10h4v4H2zm8 0h4v4h-4z"/></svg>
                 <span>Sonstiges</span>
@@ -72,30 +71,27 @@
           </a>
         </nav>
 
-        <section class="launcher-window launcher-content-window" aria-label="Launcher-Inhalt">
-          <div class="window-titlebar" id="launcher-window-title">APP-DRAWER // PROJEKTE</div>
-          <section id="launcher-projects" class="launcher-panel" aria-label="Projekte">
-            <div class="project-grid">
-              <a class="project-tile project-tile-active" href="physik4.html" data-project-category="tum">
-                <span class="project-icon" aria-hidden="true"><svg viewBox="0 0 16 16" role="img" shape-rendering="crispEdges"><path fill="currentColor" d="M2 1h12v14H2zm2 2v2h2V3zm4 0v2h4V3zM4 7v2h2V7zm4 0v2h4V7zm-4 4v2h8v-2z"/></svg></span>
-                <span class="project-title">Theoretische Physik 4 – Minitests</span>
-                <span class="launcher-badge">AKTIV</span>
-              </a>
-              <a class="project-tile project-tile-active" href="drohne.html" data-project-category="tum">
-                <span class="project-icon" aria-hidden="true"><svg viewBox="0 0 16 16" role="img" shape-rendering="crispEdges"><path fill="currentColor" d="M1 1h4v2H3v2H1zm10 0h4v4h-2V3h-2zM1 11h2v2h2v2H1zm12 0h2v4h-4v-2h2zM4 5h2v2H4zm6 0h2v2h-2zM5 6h6v2h2v2h-2v2H5v-2H3V8h2zm2 6h2v2H7z"/></svg></span>
-                <span class="project-title">PPO-Algorithmus zur Drohnensteuerung</span>
-                <span class="launcher-badge">AKTIV</span>
-              </a>
-              <a class="project-tile project-tile-active" href="muc-radar.html" data-project-category="sonstiges">
-                <span class="project-icon" aria-hidden="true">
-                  <svg viewBox="0 0 16 16" role="img" shape-rendering="crispEdges">
-                    <path fill="currentColor" d="M7 1h2v3h4v2H9v3h5v2H9v3h2v1H5v-1h2v-3H2v-2h5V6H3V4h4V1z"/>
-                  </svg>
-                </span>
-                <span class="project-title">Flughafen München (MUC) – Live Radar</span>
-                <span class="launcher-badge">AKTIV</span>
-              </a>
-            </div>
+        <section class="launcher-window launcher-content-window" aria-label="Changelog-Inhalt">
+          <div class="window-titlebar">CHANGELOG.SYS // SYSTEM-UPDATES</div>
+          <section class="launcher-panel changelog-panel" aria-label="Changelog">
+            <ol class="changelog-list">
+              <li>
+                <time datetime="2026-11-24">24.11.2026</time>
+                <div><strong>Startseite und Navigation modernisiert</strong><p>Neue Changelog-Ansicht, separate Projektübersicht und dauerhaftes 1-Bit-Weiß/Schwarz-Design.</p></div>
+              </li>
+              <li>
+                <time datetime="2026-11-23">23.11.2026</time>
+                <div><strong>Minitest 5 veröffentlicht</strong><p>Neue verschlüsselte Fragen zu freier Energie, chemischem Potential und großkanonischem Ensemble wurden ergänzt.</p></div>
+              </li>
+              <li>
+                <time datetime="2026-11-22">22.11.2026</time>
+                <div><strong>Radarroute und Airline-Erkennung verbessert</strong><p>Robuste Routenauswertung, Kursvektor und erweiterte Airline-Erkennung wurden integriert.</p></div>
+              </li>
+              <li>
+                <time datetime="2026-11-22">22.11.2026</time>
+                <div><strong>Website als Mehrseitenarchitektur umgestellt</strong><p>Gemeinsames Stylesheet, gemeinsames Basis-Skript und eigenständige Projektseiten wurden eingeführt.</p></div>
+              </li>
+            </ol>
           </section>
         </section>
       </div>

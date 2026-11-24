@@ -1,14 +1,14 @@
     @import url("https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap");
 
     :root {
-      --bg: #f3f5f9;
+      --bg: #ffffff;
       --surface: #ffffff;
-      --surface-2: #f8fafc;
-      --text: #172033;
-      --muted: #68738a;
-      --border: #dde3ed;
-      --primary: #4f46e5;
-      --primary-hover: #4338ca;
+      --surface-2: #ffffff;
+      --text: #000000;
+      --muted: #000000;
+      --border: #000000;
+      --primary: #000000;
+      --primary-hover: #000000;
       --success: #15803d;
       --success-bg: #dcfce7;
       --danger: #b91c1c;
@@ -449,26 +449,6 @@
       justify-content: center;
     }
 
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #0f172a;
-        --surface: #172033;
-        --surface-2: #1e293b;
-        --text: #edf2f7;
-        --muted: #aab5c7;
-        --border: #344258;
-        --primary: #7773ef;
-        --primary-hover: #6964df;
-        --success: #86efac;
-        --success-bg: #17452b;
-        --danger: #fca5a5;
-        --danger-bg: #4a2028;
-        --shadow: 0 12px 35px rgba(0, 0, 0, 0.22);
-      }
-      .answer:hover:not(:disabled) { background: #29254d; }
-      .badge { background: #4a3020; color: #fdba74; }
-      .btn.danger { border-color: #7f2d35; }
-    }
 
     body.bit-mode {
       display: flex;
@@ -874,10 +854,6 @@
       color: #ffffff;
     }
 
-    body.bit-mode.theme-dark {
-      filter: invert(1);
-    }
-
     .system-bar {
       position: sticky;
       top: 0;
@@ -888,8 +864,8 @@
       gap: 16px;
       padding: 10px clamp(12px, 3vw, 32px);
       border-bottom: 3px solid #000000;
-      background: #000000;
-      color: #ffffff;
+      background: #ffffff;
+      color: #000000;
       box-shadow: 0 4px 0 #000000;
       font-family: "Silkscreen", monospace;
       font-size: 0.72rem;
@@ -897,6 +873,11 @@
 
     .system-label {
       white-space: nowrap;
+    }
+
+    .system-label a {
+      color: inherit;
+      text-decoration: none;
     }
 
     .system-meta {
@@ -911,11 +892,10 @@
       white-space: nowrap;
     }
 
-    .system-theme-button,
     .quick-dock a {
       display: inline-flex;
       align-items: center;
-      border: 2px solid #ffffff;
+      border: 2px solid #000000;
       border-radius: 0;
       padding: 8px 10px;
       background: #ffffff;
@@ -927,8 +907,6 @@
       text-decoration: none;
     }
 
-    .system-theme-button:hover,
-    .system-theme-button:focus-visible,
     .quick-dock a:hover,
     .quick-dock a:focus-visible {
       background: #000000;
@@ -1188,6 +1166,43 @@
       border-width: 4px;
     }
 
+    .changelog-list {
+      display: grid;
+      gap: 0;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      border-top: 2px solid #000000;
+    }
+
+    .changelog-list li {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 16px;
+      padding: 16px 8px;
+      border-bottom: 2px solid #000000;
+    }
+
+    .changelog-list time {
+      font-family: "Silkscreen", monospace;
+      font-size: 0.68rem;
+      font-weight: 700;
+    }
+
+    .changelog-list strong {
+      display: block;
+      margin-bottom: 4px;
+      font-family: "Silkscreen", monospace;
+      font-size: 0.78rem;
+    }
+
+    .changelog-list p {
+      margin: 0;
+      font-family: "Courier New", monospace;
+      font-size: 0.78rem;
+      line-height: 1.5;
+    }
+
     .project-tile-active:hover,
     .project-tile-active:focus-visible {
       background: #000000;
@@ -1264,10 +1279,6 @@
       display: block;
       width: 100%;
       height: auto;
-    }
-
-    body.bit-mode.theme-dark .photo-slot img {
-      filter: invert(1);
     }
 
     .photo-empty {
@@ -1557,7 +1568,6 @@
       .summary-score { grid-template-columns: 1fr 1fr; }
       .system-bar { align-items: flex-start; flex-direction: column; }
       .system-meta { width: 100%; justify-content: flex-start; }
-      .system-theme-button { max-width: 100%; }
       .launcher-view { padding: 18px 12px 28px; }
       .hero-content { grid-template-columns: 1fr; gap: 18px; }
       .hero-avatar { width: 66px; height: 66px; }
@@ -1570,351 +1580,13 @@
       .project-icon { width: 48px; height: 48px; }
       .project-icon svg { width: 30px; height: 30px; }
       .project-title { font-size: 0.56rem; }
+      .changelog-list li { grid-template-columns: 92px 1fr; gap: 10px; }
       .quick-dock { position: static; display: grid; grid-template-columns: 1fr; }
       .quick-dock a { width: 100%; justify-content: center; }
       .hero-content h1 { overflow-wrap: anywhere; }
       .readme-content { padding: 14px; }
       .drone-project-actions { display: grid; grid-template-columns: 1fr; padding: 0 14px 88px; }
       .drone-project-actions .btn { width: 100%; text-align: center; }
-    }
-
-    /* MUC RADAR 1-BIT STYLES */
-    .radar-shell {
-      width: min(1300px, 100%);
-      margin: 18px auto;
-      display: grid;
-      gap: 16px;
-    }
-
-    .radar-window {
-      width: 100%;
-      border: 3px solid #000000;
-      background: #ffffff;
-      color: #000000;
-      box-shadow: 4px 4px 0 #000000;
-    }
-
-    .radar-toolbar {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 10px 14px;
-      border-bottom: 2px solid #000000;
-      background: #ffffff;
-      font-family: "Silkscreen", monospace;
-      font-size: 0.65rem;
-    }
-
-    .radar-controls {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .radar-btn {
-      padding: 6px 12px;
-      border: 2px solid #000000;
-      background: #ffffff;
-      color: #000000;
-      box-shadow: 2px 2px 0 #000000;
-      cursor: pointer;
-      font-family: "Silkscreen", monospace;
-      font-size: 0.62rem;
-    }
-
-    .radar-btn.active,
-    .radar-btn:hover {
-      background: #000000;
-      color: #ffffff;
-    }
-
-    .radar-status-bar {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .radar-canvas-container {
-      position: relative;
-      width: 100%;
-      height: 640px;
-      background: #ffffff;
-      overflow: hidden;
-      cursor: grab;
-      user-select: none;
-    }
-
-    .radar-canvas-container.panning {
-      cursor: grabbing;
-    }
-
-    #radar-canvas {
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
-
-    .radar-overlay-msg {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      max-width: 90%;
-      padding: 20px 24px;
-      border: 3px solid #000000;
-      background: #ffffff;
-      color: #000000;
-      box-shadow: 6px 6px 0 #000000;
-      text-align: center;
-      font-family: "Silkscreen", monospace;
-      z-index: 25;
-    }
-
-    .radar-overlay-msg h3 {
-      margin: 0 0 10px;
-      font-size: 0.8rem;
-    }
-
-    .radar-overlay-msg p {
-      margin: 0 0 14px;
-      font-family: "Courier New", monospace;
-      font-size: 0.75rem;
-      line-height: 1.4;
-    }
-
-    /* POKÉMON CARD MODAL 1-BIT */
-    .poke-modal-backdrop {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.65);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-      z-index: 100;
-    }
-
-    .poke-card {
-      width: min(390px, 94vw);
-      background: #ffffff;
-      color: #000000;
-      border: 4px solid #000000;
-      box-shadow: 8px 8px 0 #000000;
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      position: relative;
-    }
-
-    .poke-card.special-livery {
-      border: 4px double #000000;
-      box-shadow: 8px 8px 0 #000000, 0 0 0 2px #000000;
-    }
-
-    .poke-livery-badge {
-      background: #000000;
-      color: #ffffff;
-      font-family: "Silkscreen", monospace;
-      font-size: 0.65rem;
-      font-weight: 700;
-      text-align: center;
-      padding: 4px 6px;
-      letter-spacing: 0.05em;
-      border: 1px dashed #ffffff;
-    }
-
-    .poke-route-bar {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      background: #ffffff;
-      border: 2px solid #000000;
-      padding: 4px 6px;
-      font-family: "Silkscreen", monospace;
-      font-size: 0.65rem;
-      letter-spacing: 0.04em;
-    }
-
-    .poke-route-icon {
-      font-size: 0.8rem;
-    }
-
-    .poke-route-found {
-      font-weight: 700;
-    }
-
-    .poke-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 2px solid #000000;
-      padding-bottom: 6px;
-    }
-
-    .poke-title {
-      font-family: "Silkscreen", monospace;
-      font-size: 0.95rem;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-    }
-
-    .poke-hp-wrap {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-family: "Silkscreen", monospace;
-      font-size: 0.7rem;
-    }
-
-    .poke-badge-type {
-      padding: 2px 6px;
-      border: 2px solid #000000;
-      font-size: 0.58rem;
-      background: #000000;
-      color: #ffffff;
-    }
-
-    .poke-art-frame {
-      width: 100%;
-      height: 160px;
-      border: 3px solid #000000;
-      background: #ffffff;
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-    }
-
-    .poke-art-bg-dither {
-      position: absolute;
-      inset: 0;
-      background-image: radial-gradient(#000000 1px, transparent 1px);
-      background-size: 6px 6px;
-      opacity: 0.18;
-    }
-
-    .poke-sprite-svg {
-      width: 160px;
-      height: 72px;
-      position: relative;
-      z-index: 2;
-      image-rendering: pixelated;
-    }
-
-    .poke-subinfo {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border: 2px solid #000000;
-      padding: 4px 8px;
-      background: #ffffff;
-      font-family: "Silkscreen", monospace;
-      font-size: 0.58rem;
-    }
-
-    .poke-aircraft-name {
-      font-family: "Silkscreen", monospace;
-      font-size: 0.65rem;
-      text-align: center;
-      padding: 2px 4px;
-      background: #000000;
-      color: #ffffff;
-      letter-spacing: 0.04em;
-    }
-
-    .poke-attacks {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      border-top: 2px solid #000000;
-      border-bottom: 2px solid #000000;
-      padding: 8px 0;
-    }
-
-    .poke-attack-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      padding: 4px 6px;
-      border: 1px dashed #000000;
-      font-family: "Courier New", monospace;
-      font-size: 0.72rem;
-    }
-
-    .poke-attack-label {
-      font-family: "Silkscreen", monospace;
-      font-size: 0.56rem;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .poke-attack-val {
-      font-weight: 700;
-    }
-
-    .poke-footer {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .poke-flavor {
-      font-family: "Courier New", monospace;
-      font-size: 0.62rem;
-      border: 1px solid #000000;
-      padding: 4px;
-      text-align: center;
-      background: #f8f8f8;
-    }
-
-    .poke-close-btn {
-      width: 100%;
-      padding: 8px;
-      border: 2px solid #000000;
-      background: #ffffff;
-      color: #000000;
-      font-family: "Silkscreen", monospace;
-      font-size: 0.7rem;
-      cursor: pointer;
-      box-shadow: 3px 3px 0 #000000;
-    }
-
-    .poke-close-btn:hover {
-      background: #000000;
-      color: #ffffff;
-    }
-
-    #radar-back-btn {
-      position: fixed;
-      z-index: 40;
-      right: clamp(14px, 2vw, 24px);
-      bottom: clamp(14px, 2vh, 24px);
-      width: auto;
-      max-width: calc(100vw - 28px);
-      box-shadow: 4px 4px 0 #000000;
-    }
-
-    @media (max-width: 640px) {
-      .radar-canvas-container {
-        height: 440px;
-      }
-      .poke-card {
-        padding: 8px;
-      }
-      .poke-art-frame {
-        height: 130px;
-      }
     }
 
     @media (min-width: 1000px) {
