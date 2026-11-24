@@ -1273,6 +1273,15 @@
       font-size: 0.75rem;
     }
 
+    .markdown-fallback-detail {
+      border: 2px dashed #000000;
+      margin: 12px 8px;
+      padding: 10px;
+      font-family: "Courier New", monospace;
+      font-size: 0.72rem;
+      line-height: 1.5;
+    }
+
     .project-tile-active:hover,
     .project-tile-active:focus-visible {
       background: #000000;

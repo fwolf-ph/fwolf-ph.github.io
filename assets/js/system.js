@@ -123,6 +123,12 @@
       fallback.className = "markdown-fallback";
       fallback.textContent = "FEHLER // MARKDOWN-DATEI KONNTE NICHT GELADEN WERDEN.";
       target.append(fallback);
+      const detail = document.createElement("p");
+      detail.className = "markdown-fallback-detail";
+      detail.textContent = document.location.protocol === "file:"
+        ? `Quelle: ${filePath} — Bei direktem Öffnen über file:// ist fetch() nicht verfügbar. Starte einen lokalen HTTP-Server, z. B. mit "python3 -m http.server".`
+        : `Quelle: ${filePath} — Prüfe Datei, HTTP-Status und Pfad.`;
+      target.append(detail);
     } finally {
       target.removeAttribute("aria-busy");
     }
@@ -130,9 +136,24 @@
 
   window.loadMarkdownInto = loadMarkdownInto;
 
-  document.querySelectorAll("[data-markdown-file]").forEach(target => {
-    loadMarkdownInto(target.dataset.markdownFile, target.id);
-  });
+  function initMarkdownFeeds() {
+    document.querySelectorAll("[data-markdown-file]").forEach(target => {
+      target.hidden = false;
+      target.removeAttribute("hidden");
+      const filePath = target.dataset.markdownFile;
+      if (!target.id) {
+        target.textContent = "FEHLER // MARKDOWN-ZIEL ENTHÄLT KEINE ID.";
+        return;
+      }
+      loadMarkdownInto(filePath, target.id);
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initMarkdownFeeds, { once: true });
+  } else {
+    initMarkdownFeeds();
+  }
 
   function updateSystemClock() {
     const now = new Date();
