@@ -155,6 +155,22 @@
     initMarkdownFeeds();
   }
 
+  function normalizeSidebarMenuOrder() {
+    document.querySelectorAll(".launcher-sidebar").forEach(sidebar => {
+      const changelogLink = sidebar.querySelector('a[href="changelog.html"]');
+      const impressumLink = sidebar.querySelector('a[href="impressum.html"]');
+      if (changelogLink && impressumLink && changelogLink.nextElementSibling !== impressumLink) {
+        sidebar.insertBefore(changelogLink, impressumLink);
+      }
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", normalizeSidebarMenuOrder, { once: true });
+  } else {
+    normalizeSidebarMenuOrder();
+  }
+
   function updateSystemClock() {
     const now = new Date();
     const time = document.getElementById("system-time");
