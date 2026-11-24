@@ -1,6 +1,139 @@
 (() => {
   document.body.classList.add("bit-mode");
 
+  function escapeMarkdownUrl(url) {
+    const trimmed = url.trim();
+    if (/^(javascript|data|vbscript):/i.test(trimmed)) return null;
+    return trimmed;
+  }
+
+  function appendInlineMarkdown(parent, text) {
+    const pattern = /(\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\([^)]+\))/g;
+    let lastIndex = 0;
+    let match;
+
+    while ((match = pattern.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        parent.append(document.createTextNode(text.slice(lastIndex, match.index)));
+      }
+
+      const token = match[0];
+      if (token.startsWith("**")) {
+        const strong = document.createElement("strong");
+        strong.textContent = token.slice(2, -2);
+        parent.append(strong);
+      } else if (token.startsWith("`")) {
+        const code = document.createElement("code");
+        code.textContent = token.slice(1, -1);
+        parent.append(code);
+      } else {
+        const linkMatch = token.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+        if (linkMatch) {
+          const safeUrl = escapeMarkdownUrl(linkMatch[2]);
+          if (safeUrl) {
+            const link = document.createElement("a");
+            link.textContent = linkMatch[1];
+            link.href = safeUrl;
+            if (/^https?:\/\//i.test(safeUrl)) {
+              link.target = "_blank";
+              link.rel = "noopener noreferrer";
+            }
+            parent.append(link);
+          } else {
+            parent.append(document.createTextNode(linkMatch[1]));
+          }
+        }
+      }
+      lastIndex = pattern.lastIndex;
+    }
+
+    if (lastIndex < text.length) {
+      parent.append(document.createTextNode(text.slice(lastIndex)));
+    }
+  }
+
+  function renderMarkdown(markdown, target) {
+    target.replaceChildren();
+    const lines = markdown.replace(/\r\n?/g, "\n").split("\n");
+    let paragraphLines = [];
+
+    function flushParagraph() {
+      if (paragraphLines.length === 0) return;
+      const paragraph = document.createElement("p");
+      appendInlineMarkdown(paragraph, paragraphLines.join(" "));
+      target.append(paragraph);
+      paragraphLines = [];
+    }
+
+    for (let index = 0; index < lines.length;) {
+      const line = lines[index].trim();
+      if (!line) {
+        flushParagraph();
+        index++;
+        continue;
+      }
+
+      const heading = line.match(/^(#{1,3})\s+(.+)$/);
+      if (heading) {
+        flushParagraph();
+        const headingElement = document.createElement(`h${heading[1].length}`);
+        appendInlineMarkdown(headingElement, heading[2]);
+        target.append(headingElement);
+        index++;
+        continue;
+      }
+
+      if (/^[-*]\s+/.test(line)) {
+        flushParagraph();
+        const list = document.createElement("ul");
+        while (index < lines.length) {
+          const itemMatch = lines[index].trim().match(/^[-*]\s+(.+)$/);
+          if (!itemMatch) break;
+          const item = document.createElement("li");
+          appendInlineMarkdown(item, itemMatch[1]);
+          list.append(item);
+          index++;
+        }
+        target.append(list);
+        continue;
+      }
+
+      paragraphLines.push(line);
+      index++;
+    }
+    flushParagraph();
+  }
+
+  async function loadMarkdownInto(filePath, targetElementId) {
+    const target = document.getElementById(targetElementId);
+    if (!target) return;
+    target.classList.add("markdown-feed");
+    target.setAttribute("aria-busy", "true");
+    target.textContent = "LADE MARKDOWN …";
+
+    try {
+      const response = await fetch(filePath, { cache: "no-cache" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const markdown = await response.text();
+      if (!markdown.trim()) throw new Error("Leere Markdown-Datei");
+      renderMarkdown(markdown, target);
+    } catch (_) {
+      target.replaceChildren();
+      const fallback = document.createElement("p");
+      fallback.className = "markdown-fallback";
+      fallback.textContent = "FEHLER // MARKDOWN-DATEI KONNTE NICHT GELADEN WERDEN.";
+      target.append(fallback);
+    } finally {
+      target.removeAttribute("aria-busy");
+    }
+  }
+
+  window.loadMarkdownInto = loadMarkdownInto;
+
+  document.querySelectorAll("[data-markdown-file]").forEach(target => {
+    loadMarkdownInto(target.dataset.markdownFile, target.id);
+  });
+
   function updateSystemClock() {
     const now = new Date();
     const time = document.getElementById("system-time");

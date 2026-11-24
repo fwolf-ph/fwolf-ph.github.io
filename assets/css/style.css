@@ -1203,6 +1203,76 @@
       line-height: 1.5;
     }
 
+    .markdown-feed,
+    .changelog-content {
+      font-family: "Courier New", monospace;
+    }
+
+    .markdown-feed h1,
+    .markdown-feed h2,
+    .markdown-feed h3,
+    .changelog-content h1,
+    .changelog-content h2,
+    .changelog-content h3 {
+      font-family: "Silkscreen", monospace;
+      letter-spacing: 0.02em;
+    }
+
+    .markdown-feed h1,
+    .markdown-feed h2,
+    .changelog-content h1,
+    .changelog-content h2 {
+      margin: 0;
+      padding: 18px 8px 12px;
+      border-bottom: 2px solid #000000;
+    }
+
+    .markdown-feed h3,
+    .changelog-content h3 {
+      margin: 18px 8px 8px;
+    }
+
+    .markdown-feed p,
+    .changelog-content p {
+      margin: 10px 8px;
+      line-height: 1.6;
+    }
+
+    .markdown-feed ul,
+    .changelog-content ul {
+      margin: 8px 8px 14px;
+      padding-left: 28px;
+    }
+
+    .markdown-feed li,
+    .changelog-content li {
+      margin: 6px 0;
+    }
+
+    .markdown-feed a,
+    .changelog-content a {
+      color: #000000;
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+    }
+
+    .markdown-feed code,
+    .changelog-content code {
+      border: 1px solid #000000;
+      padding: 1px 4px;
+      background: #ffffff;
+      font-family: "Courier New", monospace;
+    }
+
+    .markdown-fallback {
+      border: 2px solid #000000;
+      margin: 12px 8px;
+      padding: 12px;
+      font-family: "Silkscreen", monospace;
+      font-size: 0.75rem;
+    }
+
     .project-tile-active:hover,
     .project-tile-active:focus-visible {
       background: #000000;
